@@ -3,35 +3,30 @@ package main
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"log-tail/assets"
 	"log-tail/g"
 	"log-tail/models/config"
+	"log-tail/server"
 	"log-tail/util/log"
-	tailNet "log-tail/util/net"
 	"log-tail/util/version"
-	"net"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 var (
-	cfgFile                string
-	showVersion            bool
-	bindAddr               string
-	bindPort               int
-	conMaxTime             int64
-	heartInterval          int64
-	logFile                string
-	logLevel               string
-	logMaxDays             int64
-	user                   string
-	pwd                    string
-	ignoreSuffix           string
-	httpServerReadTimeout  = 10 * time.Second
-	httpServerWriteTimeout = 10 * time.Second
+	cfgFile       string
+	showVersion   bool
+	bindAddr      string
+	bindPort      int
+	conMaxTime    int64
+	heartInterval int64
+	logFile       string
+	logLevel      string
+	logMaxDays    int64
+	user          string
+	pwd           string
+	ignoreSuffix  string
 )
 
 const (
@@ -98,7 +93,7 @@ func parseServerCommonCfgFromIni(content string) (err error) {
 func parseServerCommonCfgFromCmd() (err error) {
 	g.GlbServerCfg.BindAddr = bindAddr
 	g.GlbServerCfg.BindPort = bindPort
-	g.GlbServerCfg.ConMaxTime = time.Duration(conMaxTime) * time.Minute
+	g.GlbServerCfg.ConnMaxTime = time.Duration(conMaxTime) * time.Minute
 	g.GlbServerCfg.HeartInterval = time.Duration(heartInterval) * time.Second
 	g.GlbServerCfg.LogFile = logFile
 	g.GlbServerCfg.LogLevel = logLevel
@@ -127,46 +122,14 @@ func Execute() {
 func runServer() (err error) {
 	log.InitLog(g.GlbServerCfg.LogWay, g.GlbServerCfg.LogFile, g.GlbServerCfg.LogLevel, g.GlbServerCfg.LogMaxDays)
 
-	err = assets.Load("")
+	svr, err := server.NewService()
 	if err != nil {
-		err = fmt.Errorf("Load assets error: %v", err)
-		return
+		return err
 	}
+	svr.Start()
 
-	// url router
-	router := mux.NewRouter()
-	router.Use(tailNet.NewHttpAuthMiddleware(g.GlbServerCfg.User, g.GlbServerCfg.Pwd).Middleware)
-
-	// api
-	router.HandleFunc("/api/catalog", nil).Methods("GET")
-	router.HandleFunc("/api/tail/{module}/{file}", nil).Methods("GET")
-
-	// view
-	router.Handle("/favicon.ico", http.FileServer(assets.FileSystem)).Methods("GET")
-	router.PathPrefix("/static/").Handler(tailNet.MakeHttpGzipHandler(http.StripPrefix("/static/",
-		http.FileServer(assets.FileSystem)))).Methods("GET")
-
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		http.Redirect(w, r, "/static", http.StatusMovedPermanently)
-	})
-
-	address := fmt.Sprintf("%s:%d", g.GlbServerCfg.BindAddr, g.GlbServerCfg.BindPort)
-	if address == "" {
-		address = ":3000"
-	}
-
-	server := &http.Server{
-		Addr:         address,
-		Handler:      router,
-		ReadTimeout:  httpServerReadTimeout,
-		WriteTimeout: httpServerWriteTimeout,
-	}
-
-	ln, err := net.Listen("tcp", address)
-	if err != nil {
-		return nil
-	}
-
-	go server.Serve(ln)
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
+	<-signalChan
 	return nil
 }

@@ -43,7 +43,7 @@ func NewCataLogManager() (cm *CatalogManger, err error) {
 func (m *CatalogManger) Run() {
 
 	go func(m *CatalogManger) {
-		timer := time.NewTimer(time.Second * 10)
+		timer := time.NewTimer(time.Minute * 5)
 		for {
 			select {
 			case <-timer.C:
@@ -53,8 +53,9 @@ func (m *CatalogManger) Run() {
 	}(m)
 }
 
-func (m *CatalogManger) GetCatalogInfo(catalog string) (conf *config.CatalogConf, ok bool) {
-	conf, ok = m.catalogs[catalog]
+func (m *CatalogManger) GetCatalogInfo(catalog string) (conf config.CatalogConf, ok bool) {
+	realCf, ok := m.catalogs[catalog]
+	conf = *realCf
 	return
 }
 

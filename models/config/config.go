@@ -21,7 +21,7 @@ type ServerCommonConf struct {
 	BindAddr string `json:"bind_addr"`
 	BindPort int    `json:"bind_port"`
 	// time unit minute
-	ConMaxTime time.Duration `json:"con_max_time"`
+	ConnMaxTime time.Duration `json:"con_max_time"`
 	// time unit second
 	HeartInterval  time.Duration `json:"heart_interval"`
 	LogFile        string        `json:"log_file"`
@@ -32,6 +32,7 @@ type ServerCommonConf struct {
 	Pwd            string        `json:"pwd"`
 	IgnoreSuffix   []string      `json:"ignore_suffix"`
 	LastReadOffset int64         `json:"last_read_offset"`
+	AssetsDir      string        `json:"assets_dir"`
 }
 
 func (cfg *ServerCommonConf) Check() (err error) {
@@ -42,7 +43,7 @@ func GetDefaultServerConf() *ServerCommonConf {
 	cfg := &ServerCommonConf{
 		BindAddr:       "0.0.0.0",
 		BindPort:       3000,
-		ConMaxTime:     10 * time.Minute,
+		ConnMaxTime:    10 * time.Minute,
 		HeartInterval:  10 * time.Second,
 		LogFile:        "console",
 		LogWay:         "console",
@@ -52,6 +53,7 @@ func GetDefaultServerConf() *ServerCommonConf {
 		Pwd:            "admin",
 		IgnoreSuffix:   []string{},
 		LastReadOffset: int64(1000),
+		AssetsDir:      "",
 	}
 
 	cfg.IgnoreSuffix = append(cfg.IgnoreSuffix, ".jar", ".war") // code
@@ -93,12 +95,12 @@ func UnmarshalServerConfFromIni(defaultCfg *ServerCommonConf, content string) (c
 		}
 	}
 
-	if tmpStr, ok = conf.Get("common", "con_max_time"); ok {
+	if tmpStr, ok = conf.Get("common", "conn_max_time"); ok {
 		if v, err = strconv.ParseInt(tmpStr, 10, 64); err != nil {
 			err = fmt.Errorf("Parse conf error: invalid con_max_time")
 			return
 		} else {
-			cfg.ConMaxTime = time.Duration(v) * time.Minute
+			cfg.ConnMaxTime = time.Duration(v) * time.Minute
 		}
 	}
 
@@ -151,6 +153,10 @@ func UnmarshalServerConfFromIni(defaultCfg *ServerCommonConf, content string) (c
 		} else {
 			cfg.LastReadOffset = v
 		}
+	}
+
+	if tmpStr, ok = conf.Get("common", "assets_dir"); ok {
+		cfg.AssetsDir = tmpStr
 	}
 	return cfg, nil
 }

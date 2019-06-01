@@ -12,6 +12,19 @@ type CatalogConf struct {
 	ChildFile     []string `json:"child_file"`
 }
 
+func (cf *CatalogConf) HasChildFile(childfile string) (ok bool) {
+	for _, file := range cf.ChildFile {
+		if file == childfile {
+			return true
+		}
+	}
+	return false
+}
+
+func (cf *CatalogConf) FullFilePath(filePath string) string {
+	return cf.Path + filePath
+}
+
 func (cf *CatalogConf) Check() (err error) {
 	return nil
 }
