@@ -29,7 +29,7 @@ func (cf *CatalogConf) Check() (err error) {
 	return nil
 }
 
-func LoadAllCatalogFromIni(content string) (catalogs map[string]CatalogConf, err error) {
+func LoadAllCatalogFromIni(content string) (catalogs map[string]*CatalogConf, err error) {
 	conf, errRet := ini.Load(strings.NewReader(content))
 	if errRet != nil {
 		err = errRet
@@ -40,7 +40,7 @@ func LoadAllCatalogFromIni(content string) (catalogs map[string]CatalogConf, err
 		tmpStr string
 		ok     bool
 	)
-	catalogs = make(map[string]CatalogConf)
+	catalogs = make(map[string]*CatalogConf)
 	for name, section := range conf {
 		if name == "common" {
 			continue
@@ -60,7 +60,7 @@ func LoadAllCatalogFromIni(content string) (catalogs map[string]CatalogConf, err
 		if tmpStr, ok = section["ignore_suffix"]; ok {
 			catalog.IgnoreSuffixs = ParseIgnoreSuffix(tmpStr)
 		}
-		catalogs[name] = catalog
+		catalogs[name] = &catalog
 	}
 
 	return catalogs, nil

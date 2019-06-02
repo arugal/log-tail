@@ -65,7 +65,7 @@ func (m *CatalogManger) GetAllCatalogInfo() map[string]*config.CatalogConf {
 
 func (m *CatalogManger) refreshAllCatalog() {
 	for name, conf := range m.catalogs {
-		childFile, err := m.refreshCatalog(name, *conf)
+		childFile, err := m.refreshCatalog(name, conf)
 		if err != nil {
 			log.Warn("interval refresh catalog failure [%s] : %s case:%v", name, conf.Path, err)
 		} else {
@@ -74,7 +74,7 @@ func (m *CatalogManger) refreshAllCatalog() {
 	}
 }
 
-func (m *CatalogManger) AddCatalogs(catalogs map[string]config.CatalogConf) (ok bool) {
+func (m *CatalogManger) AddCatalogs(catalogs map[string]*config.CatalogConf) (ok bool) {
 	for name, conf := range catalogs {
 		childFile, err := m.refreshCatalog(name, conf)
 		if err != nil {
@@ -82,23 +82,23 @@ func (m *CatalogManger) AddCatalogs(catalogs map[string]config.CatalogConf) (ok 
 			return false
 		}
 		conf.ChildFile = childFile
-		m.catalogs[name] = &conf
+		m.catalogs[name] = conf
 	}
 	return true
 }
 
-func (m *CatalogManger) AddCataLog(name string, conf config.CatalogConf) (ok bool) {
+func (m *CatalogManger) AddCataLog(name string, conf *config.CatalogConf) (ok bool) {
 	childFile, err := m.refreshCatalog(name, conf)
 	if err != nil {
 		log.Warn("refresh catalog failure [%s] : %s case:%v", conf.Name, conf.Path, err)
 		return false
 	}
 	conf.ChildFile = childFile
-	m.catalogs[name] = &conf
+	m.catalogs[name] = conf
 	return true
 }
 
-func (m *CatalogManger) refreshCatalog(name string, conf config.CatalogConf) (childFile []string, err error) {
+func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (childFile []string, err error) {
 	log.Debug("refresh catalog [%s] : %v", name, conf)
 	pathInfo, err := os.Stat(conf.Path)
 	if err != nil {

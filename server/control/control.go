@@ -23,7 +23,7 @@ const (
 
 type TailRespProtocol struct {
 	Type Type   `json:"type"`
-	Line string `json:"line"`
+	Msg  string `json:"msg"`
 }
 
 type TailReqProtocol struct {
@@ -84,7 +84,7 @@ func (cc *ConnManager) CheckHeartTimeout() {
 	if len(cc.carries) > 0 {
 		currentTime := time.Now().Unix()
 		var newCarries []ConnCarrier
-		heartInterval := int64(g.GlbServerCfg.HeartInterval)
+		heartInterval := int64(g.GlbServerCfg.HeartInterval) * 2
 		for _, carrier := range cc.carries {
 			if currentTime-heartInterval <= carrier.LastHeartTime {
 				newCarries = append(newCarries, carrier)
@@ -158,6 +158,8 @@ func (cc *ConnCarrier) Handler() {
 				continue
 			}
 
+			cc.log.Trace("received msg %v", req)
+
 			switch req.Type {
 			case Read:
 				fileInfo, err := os.Stat(cc.Cf.FullFilePath(cc.File))
@@ -183,9 +185,10 @@ func (cc *ConnCarrier) Handler() {
 
 				go func(cc *ConnCarrier, msgType int) {
 					for line := range cc.Tail.Lines {
+						_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second))
 						resp := TailRespProtocol{
 							Type: Write,
-							Line: line.Text,
+							Msg:  line.Text,
 						}
 						buf, _ := json.Marshal(resp)
 						err := cc.Conn.WriteMessage(msgType, buf)
@@ -193,9 +196,23 @@ func (cc *ConnCarrier) Handler() {
 							cc.log.Error("Tail write message err case:%v", err)
 							return
 						}
+						cc.log.Trace("send log line %s", string(buf))
 					}
 					cc.log.Debug("Tail Done")
 				}(cc, msgType)
+				resp := TailRespProtocol{
+					Type: Heart,
+					Msg:  g.GlbServerCfg.HeartInterval.String(),
+				}
+				buf, _ := json.Marshal(resp)
+				_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second))
+				err = cc.Conn.WriteMessage(msgType, buf)
+				if err != nil {
+					cc.log.Error("Tail write message err case:%v", err)
+					cc.Close()
+					return
+				}
+				cc.log.Trace("send heart interval %s", string(buf))
 			case Heart:
 				cc.LastHeartTime = time.Now().Unix()
 			case Close:

@@ -38,6 +38,21 @@ func (auth *HttpAuthMiddleware) Middleware(next http.Handler) http.Handler {
 	})
 }
 
+type CrossDomainMiddleware struct {
+}
+
+func (cd *CrossDomainMiddleware) Middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Add("Access-Control-Allow-Origin", "*")
+		w.Header().Add("Access-Control-Request-Method", "*")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func NewCrossDomainMiddleware() *CrossDomainMiddleware {
+	return &CrossDomainMiddleware{}
+}
+
 type HttpGzipWraper struct {
 	h http.Handler
 }
