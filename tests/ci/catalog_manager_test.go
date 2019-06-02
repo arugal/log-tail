@@ -24,23 +24,3 @@ func TestCatalogManager(t *testing.T) {
 		fmt.Println(conf)
 	}
 }
-
-func TestGo(t *testing.T) {
-
-	c1 := make(chan string)
-	c2 := make(chan string)
-
-	go func() {
-		fmt.Println("1:" + <-c1)
-	}()
-
-	go func() {
-		fmt.Println("2:" + <-c2)
-	}()
-
-	c1 <- "abc"
-	c2 <- "dfg"
-
-	time.Sleep(time.Second)
-
-}

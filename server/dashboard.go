@@ -24,7 +24,7 @@ func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 
 	// api
 	router.HandleFunc("/api/catalog", svr.GetCataLogInfo).Methods("GET")
-	router.HandleFunc("/api/tail/{catalog}/{file}", svr.GetLogTail).Methods("GET")
+	router.HandleFunc("/api/tail/{catalog}/{file}", svr.GetLogTail)
 
 	// view
 	router.Handle("/favicon.ico", http.FileServer(assets.FileSystem)).Methods("GET")

@@ -49,7 +49,7 @@ func NewConnManager() *ConnManager {
 func (cc *ConnManager) Run() {
 
 	go func() {
-		heartTimer := time.NewTimer(time.Second)
+		heartTimer := time.NewTimer(time.Second * 5)
 		maxTimer := time.NewTimer(time.Minute)
 		for {
 			select {
@@ -73,9 +73,7 @@ func (cc *ConnManager) refreshCarrier(newCarries []ConnCarrier) {
 func (cc *ConnManager) ProcessNewConn() {
 	for {
 		carrie := <-cc.Cc
-
 		go carrie.Handler()
-
 		cc.carrieMu.Lock()
 		defer cc.carrieMu.Unlock()
 		cc.carries = append(cc.carries, carrie)
@@ -83,33 +81,36 @@ func (cc *ConnManager) ProcessNewConn() {
 }
 
 func (cc *ConnManager) CheckHeartTimeout() {
-	currentTime := time.Now().Unix()
-	newCarries := []ConnCarrier{}
-	heartInterval := int64(g.GlbServerCfg.HeartInterval)
-
-	for _, carrier := range cc.carries {
-		if currentTime-heartInterval <= carrier.LastHeartTime {
-			newCarries = append(newCarries, carrier)
-		} else {
-			carrier.Close()
-			cc.log.Info("heart time out auto close %v", carrier)
+	if len(cc.carries) > 0 {
+		currentTime := time.Now().Unix()
+		var newCarries []ConnCarrier
+		heartInterval := int64(g.GlbServerCfg.HeartInterval)
+		for _, carrier := range cc.carries {
+			if currentTime-heartInterval <= carrier.LastHeartTime {
+				newCarries = append(newCarries, carrier)
+			} else {
+				carrier.Close()
+				cc.log.Info("heart time out auto close %v", carrier)
+			}
 		}
+		cc.refreshCarrier(newCarries)
 	}
-	cc.refreshCarrier(newCarries)
 }
 
 func (cc *ConnManager) CheckConnMaxTime() {
-	deadline := time.Now().Unix() - int64(g.GlbServerCfg.ConnMaxTime)
-	newCarries := []ConnCarrier{}
-	for _, carrier := range cc.carries {
-		if deadline <= carrier.StartTime {
-			newCarries = append(newCarries, carrier)
-		} else {
-			carrier.Close()
-			cc.log.Info("to achieve max time auto close %v", carrier)
+	if len(cc.carries) > 0 {
+		deadline := time.Now().Unix() - int64(g.GlbServerCfg.ConnMaxTime)
+		var newCarries []ConnCarrier
+		for _, carrier := range cc.carries {
+			if deadline <= carrier.StartTime {
+				newCarries = append(newCarries, carrier)
+			} else {
+				carrier.Close()
+				cc.log.Info("to achieve max time auto close %v", carrier)
+			}
 		}
+		cc.refreshCarrier(newCarries)
 	}
-	cc.refreshCarrier(newCarries)
 }
 
 type ConnCarrier struct {
@@ -119,7 +120,6 @@ type ConnCarrier struct {
 	Tail          *tail.Tail
 	StartTime     int64
 	LastHeartTime int64
-	tailDone      chan bool
 	handerDone    chan bool
 	log           log.Logger
 }
@@ -131,8 +131,7 @@ func NewConnCarrier(conn *websocket.Conn, cf config.CatalogConf, file string) Co
 		File:          file,
 		StartTime:     time.Now().Unix(),
 		LastHeartTime: time.Now().Unix(),
-		tailDone:      make(chan bool),
-		handerDone:    make(chan bool),
+		handerDone:    make(chan bool, 1),
 		log:           log.NewPrefixLogger(cf.Name + ":" + file),
 	}
 }
@@ -141,17 +140,19 @@ func (cc *ConnCarrier) Handler() {
 	for {
 		select {
 		case <-cc.handerDone:
+			cc.log.Debug("Hander done")
 			return
 		default:
 			_ = cc.Conn.SetReadDeadline(time.Now().Add(time.Duration(g.GlbServerCfg.HeartInterval) * 2))
 			msgType, msg, err := cc.Conn.ReadMessage()
 			if err != nil {
 				cc.log.Error("Read message err case:%v", err)
+				cc.Close()
 				continue
 			}
 
 			var req TailReqProtocol
-			err = json.Unmarshal([]byte(msg), &req)
+			err = json.Unmarshal(msg, &req)
 			if err != nil {
 				cc.log.Error("Unmarshal %s err case:%v", msg, err)
 				continue
@@ -172,7 +173,7 @@ func (cc *ConnCarrier) Handler() {
 					offset = 0
 				}
 
-				t, err := tail.TailFile(cc.Cf.FullFilePath(cc.File), tail.Config{Location: &tail.SeekInfo{Offset: int64(offset), Whence: 10}, Follow: true})
+				t, err := tail.TailFile(cc.Cf.FullFilePath(cc.File), tail.Config{Location: &tail.SeekInfo{Offset: int64(offset), Whence: 0}, Follow: true})
 				if err != nil {
 					cc.log.Error("tail file err case:%v", err)
 					cc.Close()
@@ -181,19 +182,19 @@ func (cc *ConnCarrier) Handler() {
 				cc.Tail = t
 
 				go func(cc *ConnCarrier, msgType int) {
-					for {
-						select {
-						case line := <-cc.Tail.Lines:
-							resp := TailRespProtocol{
-								Type: Write,
-								Line: line.Text,
-							}
-							buf, _ := json.Marshal(resp)
-							err = cc.Conn.WriteMessage(msgType, buf)
-						case <-cc.tailDone:
+					for line := range cc.Tail.Lines {
+						resp := TailRespProtocol{
+							Type: Write,
+							Line: line.Text,
+						}
+						buf, _ := json.Marshal(resp)
+						err := cc.Conn.WriteMessage(msgType, buf)
+						if err != nil {
+							cc.log.Error("Tail write message err case:%v", err)
 							return
 						}
 					}
+					cc.log.Debug("Tail Done")
 				}(cc, msgType)
 			case Heart:
 				cc.LastHeartTime = time.Now().Unix()
@@ -205,9 +206,10 @@ func (cc *ConnCarrier) Handler() {
 }
 
 func (cc *ConnCarrier) Close() {
-	cc.tailDone <- true
 	cc.handerDone <- true
 	_ = cc.Conn.Close()
-	cc.Tail.Cleanup()
-	_ = cc.Tail.Stop()
+	if cc.Tail != nil {
+		cc.Tail.Cleanup()
+		_ = cc.Tail.Stop()
+	}
 }

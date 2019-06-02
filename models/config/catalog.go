@@ -22,7 +22,7 @@ func (cf *CatalogConf) HasChildFile(childfile string) (ok bool) {
 }
 
 func (cf *CatalogConf) FullFilePath(filePath string) string {
-	return cf.Path + filePath
+	return cf.Path + "/" + filePath
 }
 
 func (cf *CatalogConf) Check() (err error) {

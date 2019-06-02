@@ -11,6 +11,9 @@ import (
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
 }
 
 type GeneralResponse struct {
@@ -32,7 +35,7 @@ func Write(svr *Service, res *GeneralResponse, w http.ResponseWriter, r *http.Re
 	svr.log.Info("Http response [%s]: code [%d]", r.URL.Path, res.Code)
 	w.WriteHeader(res.Code)
 	if len(res.Msg) > 0 {
-		w.Write([]byte(res.Msg))
+		_, _ = w.Write([]byte(res.Msg))
 	}
 }
 
