@@ -18,39 +18,32 @@
     <el-dialog
       :title='currentCatalog+" - "+currentFile'
       :visible.sync="dialogTableVisible"
-      @closed="webSocketDest"
+      @closed="closeTailLog"
     >
-      <el-scrollbar
-        wrap-class="list"
-        view-style="font-weight: bold;"
-        view-class="view-box"
-        :native="false"
-      >
-        <div>
-          <ul class="infinite-list">
-            <li v-for="line in lines" class="infinite-list-item">{{ line }}</li>
-          </ul>
-        </div>
-      </el-scrollbar>
+      <tail-log :catalog="currentCatalog" :file="currentFile" :key="tailLogKey"></tail-log>
     </el-dialog>
   </div>
 </template>
 
 <script>
 import { setInterval, clearInterval } from "timers";
+import tailLog from "./Taillog.vue";
 export default {
   data() {
     return {
       catalogs: [],
-      tailWebSock: null,
       dialogTableVisible: false,
       lines: [],
       currentCatalog: null,
-      currentFile: null
+      currentFile: null,
+      tailLogKey: 1
     };
   },
   created() {
     this.fetchData();
+  },
+  components: {
+    tailLog
   },
   methods: {
     successNotify(msg) {
@@ -67,7 +60,6 @@ export default {
         message: h("i", { style: "color: #E6A23C" }, msg)
       });
     },
-    tailLog() {},
     fetchData() {
       fetch("http://127.0.0.1:3000/api/catalog", {
         headers: {
@@ -86,80 +78,15 @@ export default {
         });
     },
     openTailLog(catalog, file) {
-      if (this.tailWebSock != null) {
-        this.webSocketDest();
-      }
-      const wsuri = "ws://127.0.0.1:3000/api/tail/" + catalog + "/" + file;
-      this.tailWebSock = new WebSocket(wsuri);
-      this.tailWebSock.onmessage = this.webSocketOnMessage;
-      this.tailWebSock.onopen = this.webSocketOnOpen;
-      this.tailWebSock.onerror = this.webScoketOnError;
-      this.tailWebSock.onclose = this.webScoketClose;
-      this.heartBeatSend();
       this.currentCatalog = catalog;
       this.currentFile = file;
+      ++this.tailLogKey;
       this.dialogTableVisible = true;
     },
-    webSocketOnOpen() {
-      let action = { type: 0 };
-      this.webSocketSendJson(action);
-      this.successNotify(
-        "Tail " + this.currentCatalog + " " + this.currentFile + " success"
-      );
-    },
-    webScoketOnError() {
-      this.warnNotify(
-        "Tail " + this.currentCatalog + " " + this.currentFile + " failed"
-      );
-    },
-    webSocketOnMessage(e) {
-      const redata = JSON.parse(e.data);
-      switch (redata.type) {
-        case 0: {
-          break;
-        }
-        case 1: {
-          // pile up a lot of data
-          this.lines.push(redata.msg);
-          break;
-        }
-        case 2: {
-          const heartInterval = parseInt(redata.msg);
-          if (heartInterval > 0) {
-            this.heartBeatSend(heartInterval);
-          }
-          break;
-        }
-        case 3: {
-          break;
-        }
-      }
-    },
-    webSocketSendJson(data) {
-      this.tailWebSock.send(JSON.stringify(data));
-    },
-    webSocketSend(data) {
-      this.tailWebSock.send(data);
-    },
-    webScoketClose(e) {
-      this.successNotify(
-        "Close " + this.currentCatalog + " " + this.currentFile
-      );
+    closeTailLog() {
       this.currentCatalog = "";
       this.currentFile = "";
-      console.log("websocket close", e);
-    },
-    heartBeatSend(interval) {
-      clearInterval(this._inter);
-      this._inter = setInterval(() => {
-        let action = { type: 2 };
-        this.webSocketSendJson(action);
-      }, interval * 1000);
-    },
-    webSocketDest() {
-      clearInterval(this._inter);
-      this.tailWebSock.close();
-      this.lines = [];
+      ++this.tailLogKey;
     }
   }
 };
