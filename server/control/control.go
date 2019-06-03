@@ -8,7 +8,6 @@ import (
 	"log-tail/models/config"
 	"log-tail/util/log"
 	"os"
-	"sync"
 	"time"
 )
 
@@ -31,26 +30,23 @@ type TailReqProtocol struct {
 }
 
 type ConnManager struct {
-	Cc       chan ConnCarrier
-	carries  []ConnCarrier
-	carrieMu sync.Mutex
-	log      log.Logger
+	CChan     chan ConnCarrier
+	carrieMap map[string]ConnCarrier
+	log       log.Logger
 }
 
 func NewConnManager() *ConnManager {
 	return &ConnManager{
-		Cc:       make(chan ConnCarrier, 10),
-		carries:  []ConnCarrier{},
-		carrieMu: sync.Mutex{},
-		log:      log.NewPrefixLogger("ConnManager"),
+		CChan:     make(chan ConnCarrier),
+		carrieMap: make(map[string]ConnCarrier),
+		log:       log.NewPrefixLogger("ConnManager"),
 	}
 }
 
 func (cc *ConnManager) Run() {
-
 	go func() {
-		heartTimer := time.NewTimer(time.Second * 5)
-		maxTimer := time.NewTimer(time.Minute)
+		heartTimer := time.NewTicker(g.GlbServerCfg.HeartInterval)
+		maxTimer := time.NewTicker(time.Minute)
 		for {
 			select {
 			case <-heartTimer.C:
@@ -60,56 +56,66 @@ func (cc *ConnManager) Run() {
 			}
 		}
 	}()
-
 	go cc.ProcessNewConn()
 }
 
-func (cc *ConnManager) refreshCarrier(newCarries []ConnCarrier) {
-	cc.carrieMu.Lock()
-	defer cc.carrieMu.Unlock()
-	cc.carries = newCarries
+func (cc *ConnManager) AddConnCarrier(carrier ConnCarrier) {
+	carrier.Add = true
+	cc.CChan <- carrier
+}
+
+func (cc *ConnManager) delConnCarrier(carrier ConnCarrier) {
+	carrier.Add = false
+	cc.CChan <- carrier
 }
 
 func (cc *ConnManager) ProcessNewConn() {
 	for {
-		carrie := <-cc.Cc
-		go carrie.Handler()
-		cc.carrieMu.Lock()
-		defer cc.carrieMu.Unlock()
-		cc.carries = append(cc.carries, carrie)
+		carrie := <-cc.CChan
+		if carrie.Add {
+			if _, ok := cc.carrieMap[carrie.String()]; ok {
+				cc.log.Warn("carrie existing %s", carrie.String())
+			} else {
+				cc.log.Trace("receive new carrie %s", carrie.String())
+				go carrie.Handler()
+				cc.carrieMap[carrie.String()] = carrie
+			}
+		} else {
+			delete(cc.carrieMap, carrie.String())
+		}
 	}
 }
 
 func (cc *ConnManager) CheckHeartTimeout() {
-	if len(cc.carries) > 0 {
+	if len(cc.carrieMap) > 0 {
 		currentTime := time.Now().Unix()
-		var newCarries []ConnCarrier
 		heartInterval := int64(g.GlbServerCfg.HeartInterval) * 2
-		for _, carrier := range cc.carries {
-			if currentTime-heartInterval <= carrier.LastHeartTime {
-				newCarries = append(newCarries, carrier)
-			} else {
+		cc.log.Trace("go check heart time out %d - %d carries:%d", currentTime, heartInterval, len(cc.carrieMap))
+
+		for _, carrier := range cc.carrieMap {
+			cc.log.Trace("check %v heart time out", carrier.String())
+			if currentTime-heartInterval > carrier.LastHeartTime {
 				carrier.Close()
-				cc.log.Info("heart time out auto close %v", carrier)
+				cc.log.Info("heart time out auto close %s", carrier.String())
+				cc.delConnCarrier(carrier)
 			}
 		}
-		cc.refreshCarrier(newCarries)
 	}
 }
 
 func (cc *ConnManager) CheckConnMaxTime() {
-	if len(cc.carries) > 0 {
+	if len(cc.carrieMap) > 0 {
 		deadline := time.Now().Unix() - int64(g.GlbServerCfg.ConnMaxTime)
-		var newCarries []ConnCarrier
-		for _, carrier := range cc.carries {
-			if deadline <= carrier.StartTime {
-				newCarries = append(newCarries, carrier)
-			} else {
+		cc.log.Trace("go check conn max time %d carries:%d", deadline, len(cc.carrieMap))
+
+		for _, carrier := range cc.carrieMap {
+			cc.log.Trace("check %v max time %v", carrier.String())
+			if deadline > carrier.StartTime {
 				carrier.Close()
-				cc.log.Info("to achieve max time auto close %v", carrier)
+				cc.log.Info("to achieve max time auto close %s", carrier.String())
+				cc.delConnCarrier(carrier)
 			}
 		}
-		cc.refreshCarrier(newCarries)
 	}
 }
 
@@ -120,6 +126,8 @@ type ConnCarrier struct {
 	Tail          *tail.Tail
 	StartTime     int64
 	LastHeartTime int64
+	Peer          string
+	Add           bool
 	handerDone    chan bool
 	log           log.Logger
 }
@@ -132,6 +140,8 @@ func NewConnCarrier(conn *websocket.Conn, cf config.CatalogConf, file string) Co
 		StartTime:     time.Now().Unix(),
 		LastHeartTime: time.Now().Unix(),
 		handerDone:    make(chan bool, 1),
+		Peer:          conn.RemoteAddr().String(),
+		Add:           true,
 		log:           log.NewPrefixLogger(cf.Name + ":" + file),
 	}
 }
@@ -140,7 +150,7 @@ func (cc *ConnCarrier) Handler() {
 	for {
 		select {
 		case <-cc.handerDone:
-			cc.log.Debug("Hander done")
+			cc.log.Debug("Hander done %s", cc.String())
 			return
 		default:
 			_ = cc.Conn.SetReadDeadline(time.Now().Add(time.Duration(g.GlbServerCfg.HeartInterval) * 2))
@@ -193,12 +203,12 @@ func (cc *ConnCarrier) Handler() {
 						buf, _ := json.Marshal(resp)
 						err := cc.Conn.WriteMessage(msgType, buf)
 						if err != nil {
-							cc.log.Error("Tail write message err case:%v", err)
+							cc.log.Error("Tail write message err %s case:%v", cc.String(), err)
 							return
 						}
 						cc.log.Trace("send log line %s", string(buf))
 					}
-					cc.log.Debug("Tail Done")
+					cc.log.Debug("Tail Done %s", cc.String())
 				}(cc, msgType)
 				resp := TailRespProtocol{
 					Type: Heart,
@@ -220,6 +230,10 @@ func (cc *ConnCarrier) Handler() {
 			}
 		}
 	}
+}
+
+func (cc *ConnCarrier) String() string {
+	return cc.Peer + "-" + cc.Cf.Name + "-" + cc.File
 }
 
 func (cc *ConnCarrier) Close() {

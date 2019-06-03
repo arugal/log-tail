@@ -16,111 +16,124 @@
 </template>
 
 <script>
-  import {clearInterval, setInterval} from "timers";
+import { clearInterval, setInterval } from "timers";
 
-  export default {
-    name: "tail-log",
-    props: {
-      catalog: null,
-      file: null
+export default {
+  name: "tail-log",
+  props: {
+    catalog: null,
+    file: null
+  },
+  data() {
+    return {
+      lines: [],
+      tailWebSock: null
+    };
+  },
+  created() {
+    this.openTailLog();
+  },
+  beforeDestroy() {
+    this.webSocketDest();
+  },
+  methods: {
+    successNotify(msg) {
+      const h = this.$createElement;
+      this.$notify({
+        title: "Success",
+        message: h("i", { style: "color: #67C23A" }, msg)
+      });
     },
-    data() {
-      return {
-        lines: [],
-        tailWebSock: null
-      };
+    warnNotify(msg) {
+      const h = this.$createElement;
+      this.$notify({
+        title: "Wran",
+        message: h("i", { style: "color: #E6A23C" }, msg)
+      });
     },
-    created() {
-      this.openTailLog();
+    openTailLog() {
+      if (
+        this.catalog != null &&
+        this.file != null &&
+        this.catalog != "" &&
+        this.file != ""
+      ) {
+        this.webSocketDest();
+        const wsuri =
+          "ws://"+window.location.host+"/api/tail/" + this.catalog + "/" + this.file;
+        this.tailWebSock = new WebSocket(wsuri);
+        this.tailWebSock.onmessage = this.webSocketOnMessage;
+        this.tailWebSock.onopen = this.webSocketOnOpen;
+        this.tailWebSock.onerror = this.webScoketOnError;
+        this.tailWebSock.onclose = this.webScoketClose;
+      }
     },
-    beforeDestroy() {
-      this.webSocketDest();
+    webSocketOnOpen() {
+      let action = { type: 0 };
+      this.webSocketSendJson(action);
+      this.successNotify("Tail " + this.catalog + " " + this.file + " success");
     },
-    methods: {
-      successNotify(msg) {
-        const h = this.$createElement;
-        this.$notify({
-          title: "Success",
-          message: h("i", {style: "color: #67C23A"}, msg)
-        });
-      },
-      warnNotify(msg) {
-        const h = this.$createElement;
-        this.$notify({
-          title: "Wran",
-          message: h("i", {style: "color: #E6A23C"}, msg)
-        });
-      },
-      openTailLog() {
-        if (this.catalog != null && this.file != null && this.catalog != "" && this.file != "") {
-          this.webSocketDest();
-          const wsuri =
-            "ws://127.0.0.1:3000/api/tail/" + this.catalog + "/" + this.file;
-          this.tailWebSock = new WebSocket(wsuri);
-          this.tailWebSock.onmessage = this.webSocketOnMessage;
-          this.tailWebSock.onopen = this.webSocketOnOpen;
-          this.tailWebSock.onerror = this.webScoketOnError;
-          this.tailWebSock.onclose = this.webScoketClose;
+    webScoketOnError() {
+      this.warnNotify("Tail " + this.catalog + " " + this.file + " failed");
+    },
+    webSocketOnMessage(e) {
+      const redata = JSON.parse(e.data);
+      switch (redata.type) {
+        case 0: {
+          break;
         }
-      },
-      webSocketOnOpen() {
-        let action = {type: 0};
-        this.webSocketSendJson(action);
-        this.successNotify("Tail " + this.catalog + " " + this.file + " success");
-      },
-      webScoketOnError() {
-        this.warnNotify("Tail " + this.catalog + " " + this.file + " failed");
-      },
-      webSocketOnMessage(e) {
-        const redata = JSON.parse(e.data);
-        switch (redata.type) {
-          case 0: {
-            break;
-          }
-          case 1: {
-            // pile up a lot of data
-            this.lines.push(redata.msg);
-            break;
-          }
-          case 2: {
-            const heartInterval = parseInt(redata.msg);
-            if (heartInterval > 0) {
-              this.heartBeatSend(heartInterval);
-            }
-            break;
-          }
-          case 3: {
-            break;
-          }
+        case 1: {
+          // pile up a lot of data
+          this.lines.push(redata.msg);
+          break;
         }
-      },
-      webSocketSendJson(data) {
-        this.tailWebSock.send(JSON.stringify(data));
-      },
-      webScoketClose(e) {
-        this.successNotify("Close " + this.catalog + " " + this.file);
-        console.log("websocket close", e);
-      },
-      heartBeatSend(interval) {
-        clearInterval(this._inter);
-        this._inter = setInterval(() => {
-          let action = {type: 2};
-          this.webSocketSendJson(action);
-        }, interval * 1000);
-      },
-      webSocketDest() {
-        clearInterval(this._inter);
-        if (this.tailWebSock != null) {
-          this.tailWebSock.close();
-          this.lines = [];
-          this.tailWebSock = null;
+        case 2: {
+          const heartInterval = parseInt(redata.msg);
+          if (heartInterval > 0) {
+            this.heartBeatSend(heartInterval);
+          }
+          break;
+        }
+        case 3: {
+          break;
         }
       }
+    },
+    webSocketSendJson(data) {
+      this.tailWebSock.send(JSON.stringify(data));
+    },
+    webScoketClose(e) {
+      this.successNotify("Close " + this.catalog + " " + this.file);
+      console.log("websocket close", e);
+    },
+    heartBeatSend(interval) {
+      clearInterval(this._inter);
+      this._inter = setInterval(() => {
+        let action = { type: 2 };
+        this.webSocketSendJson(action);
+      }, interval * 1000);
+    },
+    webSocketDest() {
+      clearInterval(this._inter);
+      if (this.tailWebSock != null) {
+        this.tailWebSock.close();
+        this.lines = [];
+        this.tailWebSock = null;
+      }
     }
-  };
+  }
+};
 </script>
 <style>
-  .infinite-list-item {
-    margin-top: 5px;
-  }
+.infinite-list-item {
+  margin-top: 5px;
+}
+
+.list {
+  max-height: 800px;
+}
+
+li {
+  list-style-type: none;
+}
 </style>

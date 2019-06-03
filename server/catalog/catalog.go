@@ -43,7 +43,7 @@ func NewCataLogManager() (cm *CatalogManger, err error) {
 func (m *CatalogManger) Run() {
 
 	go func(m *CatalogManger) {
-		timer := time.NewTimer(time.Minute * 5)
+		timer := time.NewTicker(time.Minute * 5)
 		for {
 			select {
 			case <-timer.C:

@@ -53,7 +53,7 @@ func GetDefaultServerConf() *ServerCommonConf {
 		Pwd:            "admin",
 		IgnoreSuffix:   []string{},
 		LastReadOffset: int64(1000),
-		AssetsDir:      "",
+		AssetsDir:      "assets/static",
 	}
 
 	cfg.IgnoreSuffix = append(cfg.IgnoreSuffix, ".jar", ".war") // code

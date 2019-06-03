@@ -2,7 +2,10 @@
   <div id="app">
     <header class="grid-content header-color">
       <el-row>
-        <a class="brand" href="#">Tail</a>
+        <svg>
+          <use xlink:href="#icon-tail"></use>
+        </svg>
+        <a class="brand" href="#">tail</a>
       </el-row>
     </header>
     <section>
