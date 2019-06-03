@@ -11,6 +11,9 @@ var (
 	prefixPath string
 )
 
+//go:generate statik -src=./tail/static -dest=./tail
+//go:generate go fmt ./tail/statik/statik.go
+
 func Load(path string) (err error) {
 	prefixPath = path
 	if prefixPath != "" {
