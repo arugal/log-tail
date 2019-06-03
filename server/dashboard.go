@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/mux"
 	"log-tail/assets"
+	"log-tail/g"
 	"net"
 	"net/http"
 	"time"
@@ -19,7 +20,7 @@ var (
 func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 	// url router
 	router := mux.NewRouter()
-	//router.Use(tailNet.NewHttpAuthMiddleware(g.GlbServerCfg.User, g.GlbServerCfg.Pwd).Middleware)
+	router.Use(tailNet.NewHttpAuthMiddleware(g.GlbServerCfg.User, g.GlbServerCfg.Pwd).Middleware)
 	router.Use(tailNet.NewCrossDomainMiddleware().Middleware)
 
 	// api
