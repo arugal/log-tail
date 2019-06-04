@@ -36,6 +36,10 @@ func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 		http.Redirect(w, r, "/static", http.StatusMovedPermanently)
 	})
 
+	router.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/static/index.html", http.StatusMovedPermanently)
+	})
+
 	address := fmt.Sprintf("%s:%d", addr, port)
 	if address == "" {
 		address = ":3000"

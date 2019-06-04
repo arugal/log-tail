@@ -11,12 +11,11 @@
             v-for="file in item.child_file"
             :key="file"
             @click="openTailLog(item.catalog, file)"
-          >{{file}}
-          </el-button>
+          >{{file}}</el-button>
         </div>
       </el-card>
     </div>
-    <el-dialog
+    <el-dialog id='dialog'
       :title='currentCatalog+" - "+currentFile'
       :visible.sync="dialogTableVisible"
       @closed="closeTailLog"
@@ -27,101 +26,106 @@
 </template>
 
 <script>
-  import tailLog from "./Taillog.vue";
+import tailLog from "./Taillog.vue";
 
-  export default {
-    data() {
-      return {
-        catalogs: [],
-        dialogTableVisible: false,
-        lines: [],
-        currentCatalog: null,
-        currentFile: null,
-        tailLogKey: 1
-      };
+export default {
+  data() {
+    return {
+      catalogs: [],
+      dialogTableVisible: false,
+      lines: [],
+      currentCatalog: null,
+      currentFile: null,
+      tailLogKey: 1
+    };
+  },
+  created() {
+    this.fetchData();
+  },
+  components: {
+    tailLog
+  },
+  methods: {
+    successNotify(msg) {
+      const h = this.$createElement;
+      this.$notify({
+        title: "Success",
+        message: h("i", { style: "color: #67C23A" }, msg)
+      });
     },
-    created() {
-      this.fetchData();
+    warnNotify(msg) {
+      const h = this.$createElement;
+      this.$notify({
+        title: "Wran",
+        message: h("i", { style: "color: #E6A23C" }, msg)
+      });
     },
-    components: {
-      tailLog
-    },
-    methods: {
-      successNotify(msg) {
-        const h = this.$createElement;
-        this.$notify({
-          title: "Success",
-          message: h("i", {style: "color: #67C23A"}, msg)
-        });
-      },
-      warnNotify(msg) {
-        const h = this.$createElement;
-        this.$notify({
-          title: "Wran",
-          message: h("i", {style: "color: #E6A23C"}, msg)
-        });
-      },
-      fetchData() {
-        fetch("http://127.0.0.1:3000/api/catalog", {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
-          }
+    fetchData() {
+      fetch("/api/catalog", {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
+        }
+      })
+        .then(res => {
+          return res.json();
         })
-          .then(res => {
-            return res.json();
-          })
-          .then(json => {
-            this.catalogs = json;
-            this.successNotify("Get api catalog success");
-          })
-          .catch(err => {
-            this.warnNotify("Get api catalog failed");
-          });
-      },
-      openTailLog(catalog, file) {
-        this.currentCatalog = catalog;
-        this.currentFile = file;
-        ++this.tailLogKey;
-        this.dialogTableVisible = true;
-      },
-      closeTailLog() {
-        this.currentCatalog = "";
-        this.currentFile = "";
-        ++this.tailLogKey;
-      }
+        .then(json => {
+          this.catalogs = json;
+          this.successNotify("Get api catalog success");
+        })
+        .catch(err => {
+          this.warnNotify("Get api catalog failed");
+        });
+    },
+    openTailLog(catalog, file) {
+      this.currentCatalog = catalog;
+      this.currentFile = file;
+      ++this.tailLogKey;
+      this.dialogTableVisible = true;
+    },
+    closeTailLog() {
+      this.currentCatalog = "";
+      this.currentFile = "";
+      ++this.tailLogKey;
     }
-  };
+  }
+};
 </script>
 
 <style>
-  .text {
-    font-size: 14px;
-  }
+.text {
+  font-size: 14px;
+}
 
-  .item {
-    margin-bottom: 18px;
-  }
+.item {
+  margin-bottom: 18px;
+}
 
-  .clearfix:before,
-  .clearfix:after {
-    display: table;
-    content: "";
-  }
+.clearfix:before,
+.clearfix:after {
+  display: table;
+  content: "";
+}
 
-  .clearfix:after {
-    clear: both;
-  }
+.clearfix:after {
+  clear: both;
+}
 
-  .box-card {
-    width: 100%;
-  }
+.box-card {
+  width: 100%;
+}
 
-  .el-button {
-    margin-top: 10px;
-  }
+.el-button {
+  margin-top: 10px;
+}
 
-  .el-dialog {
-    width: 90%;
-    height: 80%;
-  }
+.el-dialog {
+  width: 90%;
+  height: 80%;
+}
+.el-dialog__body {
+  padding-top: 0px;
+  padding-left: 0px;
+  padding-bottom: 0px;
+}
 </style>

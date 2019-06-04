@@ -82,7 +82,7 @@ func (svr *Service) GetLogTail(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			carrier := control.NewConnCarrier(svr.cm2, conn, cf, file)
-			svr.cm2.AddConnCarrier(carrier)
+			svr.cm2.AddConnCarrier(&carrier)
 			return
 		} else {
 			svr.log.Error("Http request: [%s] child file miss [%s]", r.URL.Path, file)

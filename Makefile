@@ -1,4 +1,4 @@
-all: fmt build
+all: clean fmt build
 
 build: log-tail
 

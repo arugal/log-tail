@@ -31,16 +31,16 @@ type TailReqProtocol struct {
 }
 
 type ConnManager struct {
-	cChan        chan ConnCarrier
-	carrieMap    map[uint64]ConnCarrier
+	cChan        chan *ConnCarrier
+	carrieMap    map[uint64]*ConnCarrier
 	idCarrierSeq uint64
 	log          log.Logger
 }
 
 func NewConnManager() *ConnManager {
 	return &ConnManager{
-		cChan:     make(chan ConnCarrier),
-		carrieMap: make(map[uint64]ConnCarrier),
+		cChan:     make(chan *ConnCarrier),
+		carrieMap: make(map[uint64]*ConnCarrier),
 		log:       log.NewPrefixLogger("conn-manager"),
 	}
 }
@@ -66,12 +66,12 @@ func (cc *ConnManager) GenerateCarrierId() uint64 {
 	return atomic.AddUint64(&cc.idCarrierSeq, 1)
 }
 
-func (cc *ConnManager) AddConnCarrier(carrier ConnCarrier) {
+func (cc *ConnManager) AddConnCarrier(carrier *ConnCarrier) {
 	carrier.Add = true
 	cc.cChan <- carrier
 }
 
-func (cc *ConnManager) delConnCarrier(carrier ConnCarrier) {
+func (cc *ConnManager) delConnCarrier(carrier *ConnCarrier) {
 	carrier.Add = false
 	cc.cChan <- carrier
 }
@@ -102,8 +102,10 @@ func (cc *ConnManager) CheckHeartTimeout() {
 		for _, carrier := range cc.carrieMap {
 			cc.log.Trace("check %v heart time out", carrier.String())
 			if currentTime-heartInterval > carrier.LastHeartTime {
-				carrier.Close()
-				cc.log.Info("heart time out auto close %s", carrier.String())
+				if carrier.Running {
+					carrier.Close()
+					cc.log.Info("heart time out auto close %s", carrier.String())
+				}
 				cc.delConnCarrier(carrier)
 			}
 		}
@@ -118,8 +120,10 @@ func (cc *ConnManager) CheckConnMaxTime() {
 		for _, carrier := range cc.carrieMap {
 			cc.log.Trace("check %v max time %v", carrier.String())
 			if deadline > carrier.StartTime {
-				carrier.Close()
-				cc.log.Info("to achieve max time auto close %s", carrier.String())
+				if carrier.Running {
+					carrier.Close()
+					cc.log.Info("to achieve max time auto close %s", carrier.String())
+				}
 				cc.delConnCarrier(carrier)
 			}
 		}
@@ -137,6 +141,7 @@ type ConnCarrier struct {
 	Peer          string
 	Add           bool
 	handerDone    chan bool
+	Running       bool
 	log           log.Logger
 }
 
@@ -151,6 +156,7 @@ func NewConnCarrier(cm *ConnManager, conn *websocket.Conn, cf config.CatalogConf
 		handerDone:    make(chan bool, 1),
 		Peer:          conn.RemoteAddr().String(),
 		Add:           true,
+		Running:       true,
 		log:           log.NewPrefixLogger(cf.Name + ":" + file),
 	}
 }
@@ -213,7 +219,6 @@ func (cc *ConnCarrier) Handler() {
 						err := cc.Conn.WriteMessage(msgType, buf)
 						if err != nil {
 							cc.log.Error("Tail write message err %s case:%v", cc.String(), err)
-							return
 						}
 						cc.log.Trace("send log line %s", string(buf))
 					}
@@ -256,4 +261,5 @@ func (cc *ConnCarrier) Close() {
 		cc.Tail.Cleanup()
 		_ = cc.Tail.Stop()
 	}
+	cc.Running = false
 }
