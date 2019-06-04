@@ -19,7 +19,6 @@
     <el-dialog
       :title='currentCatalog+" - "+currentFile'
       :visible.sync="dialogTableVisible"
-      fullscreen
       @closed="closeTailLog"
     >
       <tail-log :catalog="currentCatalog" :file="currentFile" :key="tailLogKey"></tail-log>
@@ -63,7 +62,7 @@
         });
       },
       fetchData() {
-        fetch("/api/catalog", {
+        fetch("http://127.0.0.1:3000/api/catalog", {
           headers: {
             "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8"
           }

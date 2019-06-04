@@ -81,7 +81,7 @@ func (svr *Service) GetLogTail(w http.ResponseWriter, r *http.Request) {
 				Write(svr, &res, w, r)
 				return
 			}
-			carrier := control.NewConnCarrier(conn, cf, file)
+			carrier := control.NewConnCarrier(svr.cm2, conn, cf, file)
 			svr.cm2.AddConnCarrier(carrier)
 			return
 		} else {

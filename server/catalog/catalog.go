@@ -43,6 +43,7 @@ func NewCataLogManager() (cm *CatalogManger, err error) {
 func (m *CatalogManger) Run() {
 
 	go func(m *CatalogManger) {
+		m.log.Info("Start CatalogManger  scanInterval %s", time.Duration(time.Minute*5).String())
 		timer := time.NewTicker(time.Minute * 5)
 		for {
 			select {

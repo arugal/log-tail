@@ -8,6 +8,7 @@ import (
 	"log-tail/models/config"
 	"log-tail/util/log"
 	"os"
+	"sync/atomic"
 	"time"
 )
 
@@ -30,22 +31,24 @@ type TailReqProtocol struct {
 }
 
 type ConnManager struct {
-	CChan     chan ConnCarrier
-	carrieMap map[string]ConnCarrier
-	log       log.Logger
+	cChan        chan ConnCarrier
+	carrieMap    map[uint64]ConnCarrier
+	idCarrierSeq uint64
+	log          log.Logger
 }
 
 func NewConnManager() *ConnManager {
 	return &ConnManager{
-		CChan:     make(chan ConnCarrier),
-		carrieMap: make(map[string]ConnCarrier),
-		log:       log.NewPrefixLogger("ConnManager"),
+		cChan:     make(chan ConnCarrier),
+		carrieMap: make(map[uint64]ConnCarrier),
+		log:       log.NewPrefixLogger("conn-manager"),
 	}
 }
 
 func (cc *ConnManager) Run() {
 	go func() {
-		heartTimer := time.NewTicker(g.GlbServerCfg.HeartInterval)
+		cc.log.Info("Start ConnManager heartInterval %s maxInterval:%s", time.Second.String(), time.Minute.String())
+		heartTimer := time.NewTicker(time.Second)
 		maxTimer := time.NewTicker(time.Minute)
 		for {
 			select {
@@ -59,29 +62,33 @@ func (cc *ConnManager) Run() {
 	go cc.ProcessNewConn()
 }
 
+func (cc *ConnManager) GenerateCarrierId() uint64 {
+	return atomic.AddUint64(&cc.idCarrierSeq, 1)
+}
+
 func (cc *ConnManager) AddConnCarrier(carrier ConnCarrier) {
 	carrier.Add = true
-	cc.CChan <- carrier
+	cc.cChan <- carrier
 }
 
 func (cc *ConnManager) delConnCarrier(carrier ConnCarrier) {
 	carrier.Add = false
-	cc.CChan <- carrier
+	cc.cChan <- carrier
 }
 
 func (cc *ConnManager) ProcessNewConn() {
 	for {
-		carrie := <-cc.CChan
+		carrie := <-cc.cChan
 		if carrie.Add {
-			if _, ok := cc.carrieMap[carrie.String()]; ok {
+			if _, ok := cc.carrieMap[carrie.Id()]; ok {
 				cc.log.Warn("carrie existing %s", carrie.String())
 			} else {
 				cc.log.Trace("receive new carrie %s", carrie.String())
 				go carrie.Handler()
-				cc.carrieMap[carrie.String()] = carrie
+				cc.carrieMap[carrie.Id()] = carrie
 			}
 		} else {
-			delete(cc.carrieMap, carrie.String())
+			delete(cc.carrieMap, carrie.Id())
 		}
 	}
 }
@@ -89,7 +96,7 @@ func (cc *ConnManager) ProcessNewConn() {
 func (cc *ConnManager) CheckHeartTimeout() {
 	if len(cc.carrieMap) > 0 {
 		currentTime := time.Now().Unix()
-		heartInterval := int64(g.GlbServerCfg.HeartInterval) * 2
+		heartInterval := int64(g.GlbServerCfg.HeartInterval/time.Second) * 2 // s
 		cc.log.Trace("go check heart time out %d - %d carries:%d", currentTime, heartInterval, len(cc.carrieMap))
 
 		for _, carrier := range cc.carrieMap {
@@ -105,7 +112,7 @@ func (cc *ConnManager) CheckHeartTimeout() {
 
 func (cc *ConnManager) CheckConnMaxTime() {
 	if len(cc.carrieMap) > 0 {
-		deadline := time.Now().Unix() - int64(g.GlbServerCfg.ConnMaxTime)
+		deadline := time.Now().Unix() - int64(g.GlbServerCfg.ConnMaxTime/time.Second) // s
 		cc.log.Trace("go check conn max time %d carries:%d", deadline, len(cc.carrieMap))
 
 		for _, carrier := range cc.carrieMap {
@@ -120,6 +127,7 @@ func (cc *ConnManager) CheckConnMaxTime() {
 }
 
 type ConnCarrier struct {
+	id            uint64
 	Conn          *websocket.Conn
 	Cf            config.CatalogConf
 	File          string
@@ -132,8 +140,9 @@ type ConnCarrier struct {
 	log           log.Logger
 }
 
-func NewConnCarrier(conn *websocket.Conn, cf config.CatalogConf, file string) ConnCarrier {
+func NewConnCarrier(cm *ConnManager, conn *websocket.Conn, cf config.CatalogConf, file string) ConnCarrier {
 	return ConnCarrier{
+		id:            cm.GenerateCarrierId(),
 		Conn:          conn,
 		Cf:            cf,
 		File:          file,
@@ -230,6 +239,10 @@ func (cc *ConnCarrier) Handler() {
 			}
 		}
 	}
+}
+
+func (cc *ConnCarrier) Id() uint64 {
+	return cc.id
 }
 
 func (cc *ConnCarrier) String() string {

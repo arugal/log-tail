@@ -54,5 +54,6 @@ func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 	}
 
 	go server.Serve(ln)
+	svr.log.Info("Start Dashboard listen %s", ln.Addr())
 	return nil
 }
