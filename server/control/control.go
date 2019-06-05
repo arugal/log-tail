@@ -8,6 +8,7 @@ import (
 	"log-tail/models/config"
 	"log-tail/util/log"
 	"os"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -210,17 +211,19 @@ func (cc *ConnCarrier) Handler() {
 
 				go func(cc *ConnCarrier, msgType int) {
 					for line := range cc.Tail.Lines {
-						_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second))
-						resp := TailRespProtocol{
-							Type: Write,
-							Msg:  line.Text,
+						lenL := strings.Count(line.Text, "") - 1
+						if lenL > 100 {
+							for i := 0; i < lenL; i += 200 {
+								max := i + 200
+								if max > lenL {
+									max = lenL
+								}
+								WriteLine(cc, line.Text[i:max], msgType)
+							}
+						} else {
+							WriteLine(cc, line.Text, msgType)
 						}
-						buf, _ := json.Marshal(resp)
-						err := cc.Conn.WriteMessage(msgType, buf)
-						if err != nil {
-							cc.log.Error("Tail write message err %s case:%v", cc.String(), err)
-						}
-						cc.log.Trace("send log line %s", string(buf))
+
 					}
 					cc.log.Debug("Tail Done %s", cc.String())
 				}(cc, msgType)
@@ -244,6 +247,20 @@ func (cc *ConnCarrier) Handler() {
 			}
 		}
 	}
+}
+
+func WriteLine(cc *ConnCarrier, line string, msgType int) {
+	_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second))
+	resp := TailRespProtocol{
+		Type: Write,
+		Msg:  line,
+	}
+	buf, _ := json.Marshal(resp)
+	err := cc.Conn.WriteMessage(msgType, buf)
+	if err != nil {
+		cc.log.Error("Tail write message err %s case:%v", cc.String(), err)
+	}
+	cc.log.Trace("send log line %s", string(buf))
 }
 
 func (cc *ConnCarrier) Id() uint64 {

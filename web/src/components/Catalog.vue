@@ -15,7 +15,8 @@
         </div>
       </el-card>
     </div>
-    <el-dialog id='dialog'
+    <el-dialog
+      id="dialog"
       :title='currentCatalog+" - "+currentFile'
       :visible.sync="dialogTableVisible"
       @closed="closeTailLog"
@@ -50,14 +51,16 @@ export default {
       const h = this.$createElement;
       this.$notify({
         title: "Success",
-        message: h("i", { style: "color: #67C23A" }, msg)
+        message: h("i", { style: "color: #67C23A" }, msg),
+        type: "success"
       });
     },
     warnNotify(msg) {
       const h = this.$createElement;
       this.$notify({
-        title: "Wran",
-        message: h("i", { style: "color: #E6A23C" }, msg)
+        title: "Warning",
+        message: h("i", { style: "color: #E6A23C" }, msg),
+        type: "warning"
       });
     },
     fetchData() {

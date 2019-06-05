@@ -10,7 +10,7 @@
       <div>
         <ul class="infinite-list">
           <li v-for="line in lines" class="infinite-list-item">
-            <pre v-highlightjs><code class="java">{{line}}</code></pre>
+            <Prism language="java" :code="line"></Prism>
           </li>
         </ul>
       </div>
@@ -19,9 +19,14 @@
 </template>
 
 <script>
+import Prism from "vue-prismjs";
+import "prismjs/themes/prism.css";
 import { clearInterval, setInterval } from "timers";
 export default {
   name: "tail-log",
+  components: {
+    Prism
+  },
   props: {
     catalog: null,
     file: null
@@ -30,7 +35,8 @@ export default {
     return {
       lines: [],
       tailWebSock: null,
-      onSliding: true
+      onSliding: true,
+      roll: "un roll"
     };
   },
   created() {
@@ -44,14 +50,16 @@ export default {
       const h = this.$createElement;
       this.$notify({
         title: "Success",
-        message: h("i", { style: "color: #67C23A" }, msg)
+        message: h("i", { style: "color: #67C23A" }, msg),
+        type: "success"
       });
     },
     warnNotify(msg) {
       const h = this.$createElement;
       this.$notify({
-        title: "Wran",
-        message: h("i", { style: "color: #E6A23C" }, msg)
+        title: "Warning",
+        message: h("i", { style: "color: #E6A23C" }, msg),
+        type: "warning"
       });
     },
     openTailLog() {
@@ -79,10 +87,10 @@ export default {
     webSocketOnOpen() {
       let action = { type: 0 };
       this.webSocketSendJson(action);
-      this.successNotify("Tail " + this.catalog + " " + this.file + " success");
+      this.successNotify("Tail " + this.catalog + ":" + this.file + " success");
     },
     webScoketOnError() {
-      this.warnNotify("Tail " + this.catalog + " " + this.file + " failed");
+      this.warnNotify("Tail " + this.catalog + ":" + this.file + " failed");
     },
     webSocketOnMessage(e) {
       const redata = JSON.parse(e.data);
@@ -93,6 +101,9 @@ export default {
         case 1: {
           // pile up a lot of data
           this.lines.push(redata.msg);
+          if (this.lines.length > 1000) {
+            this.lines.splice(0, 1);
+          }
           this.sliding();
           break;
         }
@@ -137,9 +148,6 @@ export default {
           container.scrollTop = container.scrollHeight;
         });
       }
-    },
-    keyUp() {
-      this.onSliding = !this.onSliding;
     }
   }
 };
@@ -149,22 +157,23 @@ export default {
   margin-top: 0px;
 }
 
-pre {
-  margin-top: 0px;
-  margin-bottom: 0px;
-}
-
-.hljs {
-  padding-top: 0px;
-  padding-bottom: 0px;
+#logContainer {
+  max-height: 680px;
 }
 
 .infinite-list {
+  margin-bottom: 0px;
   padding-left: 20px;
 }
 
-#logContainer {
-  max-height: 680px;
+code[class*="language-"],
+pre[class*="language-"] {
+  margin-top: 0px;
+  margin-bottom: 0px;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 0px;
+  padding-right: 0px;
 }
 
 li {
