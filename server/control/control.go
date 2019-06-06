@@ -223,6 +223,7 @@ func (cc *ConnCarrier) Handler() {
 						} else {
 							WriteLine(cc, line.Text, msgType)
 						}
+						time.Sleep(time.Microsecond * 10)
 
 					}
 					cc.log.Debug("Tail Done %s", cc.String())
@@ -250,7 +251,7 @@ func (cc *ConnCarrier) Handler() {
 }
 
 func WriteLine(cc *ConnCarrier, line string, msgType int) {
-	_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second))
+	_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second * 5))
 	resp := TailRespProtocol{
 		Type: Write,
 		Msg:  line,
