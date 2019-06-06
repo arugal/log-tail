@@ -101,7 +101,7 @@ export default {
         case 1: {
           // pile up a lot of data
           this.lines.push(redata.msg);
-          if (this.lines.length > 1000) {
+          if (this.lines.length > 200) {
             this.lines.splice(0, 1);
           }
           this.sliding();
