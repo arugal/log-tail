@@ -223,7 +223,6 @@ func (cc *ConnCarrier) Handler() {
 						} else {
 							WriteLine(cc, line.Text, msgType)
 						}
-						time.Sleep(time.Microsecond * 10)
 
 					}
 					cc.log.Debug("Tail Done %s", cc.String())
@@ -262,6 +261,7 @@ func WriteLine(cc *ConnCarrier, line string, msgType int) {
 		cc.log.Error("Tail write message err %s case:%v", cc.String(), err)
 	}
 	cc.log.Trace("send log line %s", string(buf))
+	time.Sleep(time.Microsecond * 25)
 }
 
 func (cc *ConnCarrier) Id() uint64 {
