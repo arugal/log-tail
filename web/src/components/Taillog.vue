@@ -5,6 +5,7 @@
       wrap-class="list"
       view-style="font-weight: bold;"
       view-class="view-box"
+      v-bind:style="scrollbarMaxHeight"
       :native="false"
     >
       <div>
@@ -37,7 +38,10 @@ export default {
       lineBuffer: [],
       tailWebSock: null,
       onSliding: true,
-      roll: "un roll"
+      roll: "un roll",
+      scrollbarMaxHeight: {
+        "max-height": "680px"
+      }
     };
   },
   created() {
@@ -85,6 +89,10 @@ export default {
         this.tailWebSock.onerror = this.webScoketOnError;
         this.tailWebSock.onclose = this.webScoketClose;
       }
+      var body = document.body;
+      this.scrollbarMaxHeight = {
+        "max-height": body.clientHeight * 0.67 + "px"
+      };
     },
     webSocketOnOpen() {
       var lineUi = document.querySelector("#lines-ui");
@@ -172,10 +180,6 @@ export default {
   margin-top: 0px;
 }
 
-#logContainer {
-  max-height: 680px;
-}
-
 .infinite-list {
   margin-bottom: 0px;
   padding-left: 20px;
@@ -197,6 +201,5 @@ li {
 
 .el-scrollbar {
   overflow: scroll;
-  max-height: 680px;
 }
 </style>
