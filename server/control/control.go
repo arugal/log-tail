@@ -28,7 +28,16 @@ type TailRespProtocol struct {
 }
 
 type TailReqProtocol struct {
-	Type Type `json:"type"`
+	Type    Type `json:"type"`
+	UiWidth int  `json:"ui_width"`
+}
+
+func (t *TailReqProtocol) LineNum() int {
+	if t.UiWidth == 0 {
+		return 200
+	} else {
+		return t.UiWidth/9 + 10
+	}
 }
 
 type ConnManager struct {
@@ -209,12 +218,12 @@ func (cc *ConnCarrier) Handler() {
 				}
 				cc.Tail = t
 
-				go func(cc *ConnCarrier, msgType int) {
+				go func(cc *ConnCarrier, lineNum, msgType int) {
 					for line := range cc.Tail.Lines {
 						lenL := strings.Count(line.Text, "") - 1
-						if lenL > 100 {
-							for i := 0; i < lenL; i += 200 {
-								max := i + 200
+						if lenL > lineNum {
+							for i := 0; i < lenL; i += lineNum {
+								max := i + lineNum
 								if max > lenL {
 									max = lenL
 								}
@@ -226,7 +235,7 @@ func (cc *ConnCarrier) Handler() {
 
 					}
 					cc.log.Debug("Tail Done %s", cc.String())
-				}(cc, msgType)
+				}(cc, req.LineNum(), msgType)
 				resp := TailRespProtocol{
 					Type: Heart,
 					Msg:  g.GlbServerCfg.HeartInterval.String(),
@@ -261,7 +270,7 @@ func WriteLine(cc *ConnCarrier, line string, msgType int) {
 		cc.log.Error("Tail write message err %s case:%v", cc.String(), err)
 	}
 	cc.log.Trace("send log line %s", string(buf))
-	time.Sleep(time.Microsecond * 25)
+	time.Sleep(time.Microsecond * 200)
 }
 
 func (cc *ConnCarrier) Id() uint64 {

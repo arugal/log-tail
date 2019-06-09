@@ -8,7 +8,7 @@
       :native="false"
     >
       <div>
-        <ul class="infinite-list">
+        <ul class="infinite-list" id="lines-ui">
           <li v-for="line in lines" class="infinite-list-item">
             <Prism language="java" :code="line"></Prism>
           </li>
@@ -34,6 +34,7 @@ export default {
   data() {
     return {
       lines: [],
+      lineBuffer: [],
       tailWebSock: null,
       onSliding: true,
       roll: "un roll"
@@ -41,6 +42,7 @@ export default {
   },
   created() {
     this.openTailLog();
+    this.refreshLines();
   },
   beforeDestroy() {
     this.webSocketDest();
@@ -85,7 +87,8 @@ export default {
       }
     },
     webSocketOnOpen() {
-      let action = { type: 0 };
+      var lineUi = document.querySelector("#lines-ui");
+      let action = { type: 0, ui_width: lineUi.clientWidth };
       this.webSocketSendJson(action);
       this.successNotify("Tail " + this.catalog + ":" + this.file + " success");
     },
@@ -100,11 +103,7 @@ export default {
         }
         case 1: {
           // pile up a lot of data
-          this.lines.push(redata.msg);
-          if (this.lines.length > 200) {
-            this.lines.splice(0, 1);
-          }
-          this.sliding();
+          this.lineBuffer.push(redata.msg);
           break;
         }
         case 2: {
@@ -133,8 +132,24 @@ export default {
         this.webSocketSendJson(action);
       }, interval * 1000);
     },
+    refreshLines() {
+      clearInterval(this._refresh);
+      this._refresh = setInterval(() => {
+        var newLines = this.lineBuffer.splice(0, 200);
+        if (newLines.length > 0) {
+          var tempLines = this.lines.concat();
+          tempLines.push(...newLines);
+          if (tempLines.length > 500) {
+            tempLines.splice(0, tempLines.length - 500);
+          }
+          this.lines = tempLines;
+          this.sliding();
+        }
+      }, 1000); // ms
+    },
     webSocketDest() {
       clearInterval(this._inter);
+      clearInterval(this._refresh);
       if (this.tailWebSock != null) {
         this.tailWebSock.close();
         this.lines = [];
