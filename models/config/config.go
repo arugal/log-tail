@@ -31,6 +31,7 @@ type ServerCommonConf struct {
 	User           string        `json:"user"`
 	Pwd            string        `json:"pwd"`
 	IgnoreSuffix   []string      `json:"ignore_suffix"`
+	IgnoreRegexp   []string      `json:"ignore_regexp"`
 	LastReadOffset int64         `json:"last_read_offset"`
 	AssetsDir      string        `json:"assets_dir"`
 }
@@ -145,6 +146,10 @@ func UnmarshalServerConfFromIni(defaultCfg *ServerCommonConf, content string) (c
 		cfg.IgnoreSuffix = ParseIgnoreSuffix(tmpStr)
 	}
 
+	if tmpStr, ok = conf.Get("common", "ignore_regexp"); ok {
+		cfg.IgnoreRegexp = ParseIgnoreRegexp(tmpStr)
+	}
+
 	if tmpStr, ok = conf.Get("common", "last_read_offset"); ok {
 		v, err = strconv.ParseInt(tmpStr, 10, 64)
 		if err != nil {
@@ -167,6 +172,10 @@ func ParseIgnoreSuffix(ignore string) []string {
 	} else {
 		return strings.Split(ignore, ",")
 	}
+}
+
+func ParseIgnoreRegexp(ignore string) []string {
+	return ParseIgnoreSuffix(ignore)
 }
 
 func init() {

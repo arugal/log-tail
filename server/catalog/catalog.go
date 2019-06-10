@@ -7,6 +7,7 @@ import (
 	"log-tail/models/config"
 	"log-tail/util/log"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -122,8 +123,28 @@ func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (c
 		}
 
 		if !ignore {
+			for _, reg := range conf.IgnoreRegexp {
+				match, _ := regexp.MatchString(reg, fileInfo.Name())
+				if match {
+					ignore = true
+					break
+				}
+			}
+		}
+
+		if !ignore {
 			for _, suffix := range g.GlbServerCfg.IgnoreSuffix {
 				if strings.HasSuffix(fileInfo.Name(), suffix) {
+					ignore = true
+					break
+				}
+			}
+		}
+
+		if !ignore {
+			for _, reg := range g.GlbServerCfg.IgnoreRegexp {
+				match, _ := regexp.MatchString(reg, fileInfo.Name())
+				if match {
 					ignore = true
 					break
 				}

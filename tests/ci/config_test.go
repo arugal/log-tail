@@ -3,6 +3,7 @@ package ci
 import (
 	"fmt"
 	"log-tail/models/config"
+	"regexp"
 	"testing"
 )
 
@@ -23,4 +24,10 @@ func TestParseCatalogCfg(t *testing.T) {
 		t.Fail()
 	}
 	fmt.Println(catalogs)
+}
+
+func TestRegexp(t *testing.T) {
+	reg := ".log."
+	match, _ := regexp.MatchString(reg, "application.log.2019-05-16")
+	fmt.Println(match)
 }

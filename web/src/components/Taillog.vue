@@ -5,6 +5,7 @@
       wrap-class="list"
       view-style="font-weight: bold;"
       view-class="view-box"
+      v-bind:style="scrollbarMaxHeight"
       :native="false"
     >
       <div>
@@ -88,9 +89,8 @@ export default {
         this.tailWebSock.onerror = this.webScoketOnError;
         this.tailWebSock.onclose = this.webScoketClose;
       }
-      var body = document.body;
       this.scrollbarMaxHeight = {
-        "max-height": body.clientHeight * 0.67 + "px"
+        "max-height": window.innerHeight * 0.7 + "px"
       };
     },
     webSocketOnOpen() {
@@ -182,10 +182,6 @@ export default {
 .infinite-list {
   margin-bottom: 0px;
   padding-left: 20px;
-}
-
-#logContainer{
-  max-height: 680px;
 }
 
 code[class*="language-"],

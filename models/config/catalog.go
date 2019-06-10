@@ -9,6 +9,7 @@ type CatalogConf struct {
 	Name          string   `json:"name"`
 	Path          string   `json:"path"`
 	IgnoreSuffixs []string `json:"ignore_suffix"`
+	IgnoreRegexp  []string `json:"ignore_regexp"`
 	ChildFile     []string `json:"child_file"`
 }
 
@@ -59,6 +60,10 @@ func LoadAllCatalogFromIni(content string) (catalogs map[string]*CatalogConf, er
 
 		if tmpStr, ok = section["ignore_suffix"]; ok {
 			catalog.IgnoreSuffixs = ParseIgnoreSuffix(tmpStr)
+		}
+
+		if tmpStr, ok = section["ignore_regexp"]; ok {
+			catalog.IgnoreRegexp = ParseIgnoreRegexp(tmpStr)
 		}
 		catalogs[name] = &catalog
 	}
