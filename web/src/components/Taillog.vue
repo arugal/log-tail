@@ -5,7 +5,6 @@
       wrap-class="list"
       view-style="font-weight: bold;"
       view-class="view-box"
-      v-bind:style="scrollbarMaxHeight"
       :native="false"
     >
       <div>
@@ -183,6 +182,10 @@ export default {
 .infinite-list {
   margin-bottom: 0px;
   padding-left: 20px;
+}
+
+#logContainer{
+  max-height: 680px;
 }
 
 code[class*="language-"],
