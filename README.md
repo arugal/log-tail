@@ -17,3 +17,4 @@ log tail in web
 
 # 注意
 + go只有在编译的时候需要go的环境,在各个os上需要重新编译，这点与java不一样
++ 出现下载依赖失败时添加环境变量 GOPROXY=https://goproxy.io
