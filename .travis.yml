@@ -5,4 +5,4 @@ go:
   - 1.12.x
 
 install:
-  - make
+  - make log-tail
