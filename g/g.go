@@ -1,7 +1,7 @@
 package g
 
 import (
-	"log-tail/models/config"
+	"github.com/Arugal/log-tail/models/config"
 )
 
 var (

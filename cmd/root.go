@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/Arugal/log-tail/g"
+	"github.com/Arugal/log-tail/models/config"
+	"github.com/Arugal/log-tail/server"
+	"github.com/Arugal/log-tail/util/log"
+	"github.com/Arugal/log-tail/util/version"
 	"github.com/spf13/cobra"
-	"log-tail/g"
-	"log-tail/models/config"
-	"log-tail/server"
-	"log-tail/util/log"
-	"log-tail/util/version"
 	"os"
 	"os/signal"
 	"syscall"

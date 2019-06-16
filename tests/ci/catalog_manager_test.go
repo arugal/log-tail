@@ -2,7 +2,7 @@ package ci
 
 import (
 	"fmt"
-	"log-tail/server/catalog"
+	"github.com/Arugal/log-tail/server/catalog"
 	"testing"
 	"time"
 )

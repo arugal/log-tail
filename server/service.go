@@ -2,11 +2,11 @@ package server
 
 import (
 	"fmt"
-	"log-tail/assets"
-	"log-tail/g"
-	"log-tail/server/catalog"
-	"log-tail/server/control"
-	"log-tail/util/log"
+	"github.com/Arugal/log-tail/assets"
+	"github.com/Arugal/log-tail/g"
+	"github.com/Arugal/log-tail/server/catalog"
+	"github.com/Arugal/log-tail/server/control"
+	"github.com/Arugal/log-tail/util/log"
 )
 
 var ServerService *Service

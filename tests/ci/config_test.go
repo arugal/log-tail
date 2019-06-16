@@ -2,7 +2,7 @@ package ci
 
 import (
 	"fmt"
-	"log-tail/models/config"
+	"github.com/Arugal/log-tail/models/config"
 	"regexp"
 	"testing"
 )

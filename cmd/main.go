@@ -1,6 +1,6 @@
 package main
 
-import _ "log-tail/assets/tail/statik"
+import _ "github.com/Arugal/log-tail/assets/tail/statik"
 
 func main() {
 	Execute()

@@ -2,14 +2,14 @@ package server
 
 import (
 	"fmt"
+	"github.com/Arugal/log-tail/assets"
+	"github.com/Arugal/log-tail/g"
 	"github.com/gorilla/mux"
-	"log-tail/assets"
-	"log-tail/g"
 	"net"
 	"net/http"
 	"time"
 
-	tailNet "log-tail/util/net"
+	tailNet "github.com/Arugal/log-tail/util/net"
 )
 
 var (

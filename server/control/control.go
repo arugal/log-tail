@@ -2,11 +2,11 @@ package control
 
 import (
 	"encoding/json"
+	"github.com/Arugal/log-tail/g"
+	"github.com/Arugal/log-tail/models/config"
+	"github.com/Arugal/log-tail/util/log"
 	"github.com/gorilla/websocket"
 	"github.com/hpcloud/tail"
-	"log-tail/g"
-	"log-tail/models/config"
-	"log-tail/util/log"
 	"os"
 	"strings"
 	"sync/atomic"

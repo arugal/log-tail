@@ -1,8 +1,8 @@
 package ci
 
 import (
-	"log-tail/g"
-	"log-tail/models/config"
+	"github.com/Arugal/log-tail/g"
+	"github.com/Arugal/log-tail/models/config"
 )
 
 var (
