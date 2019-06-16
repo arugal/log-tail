@@ -1,4 +1,4 @@
-module log-tail
+module github.com/Arugal/log-tail
 
 go 1.12
 
