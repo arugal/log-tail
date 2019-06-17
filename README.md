@@ -21,6 +21,6 @@ log tail in web
 
 - TODO
 - [ ] travis、Codecov集成
-- [ ] 项目内引用路径切换
+- [x] 项目内引用路径切换
 - [ ] web自适应
 - [ ] 项目文档编写
