@@ -5,4 +5,5 @@ go:
   - 1.12.x
 
 install:
+  - git version
   - make log-tail
