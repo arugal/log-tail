@@ -12,12 +12,14 @@ log tail in web
 
 
 # 代码编译
-+ linux 如果有 make 直接执行 make all 接口,编译后的二进制文件在bin/目录，配置文件在conf/目录, 通过 -c 参数指定配置文件路径 例： ./log-tail -c conf/log_tail.ini
-+ windows 目前没有脚本，直接执行 go build -o bin/log-tail ./cmd 编译
++ ```linux``` 如果有 ```make``` 直接执行 ```make all``` 接口,编译后的二进制文件在```bin/```目录，配置文件在```conf/```目录,
+ 通过 ```-c``` 参数指定配置文件路径 例： ```./log-tail -c conf/log_tail.ini```
++ ```windows``` 目前没有脚本，直接执行 ```go build -o bin/log-tail ./cmd``` 编译
++ 出现 ```cannot find package``` 异常时，将环境变量 ```GO111MODULE``` 设置为 ```on```
 
 # 注意
-+ go只有在编译的时候需要go的环境,在各个os上需要重新编译，这点与java不一样
-+ 出现下载依赖失败时添加环境变量 GOPROXY=https://goproxy.io
++ ```go```只有在编译的时候需要```go```的环境,在各个```os```上需要重新编译，这点与```java```不一样
++ 出现下载依赖超时异常添加环境变量```GOPROXY=https://goproxy.io```
 
 - TODO
 - [ ] travis、Codecov集成
