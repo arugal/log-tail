@@ -5,5 +5,5 @@ go:
   - 1.12.x
 
 install:
-  - git version
+  - export GO111MODULE=no
   - make log-tail
