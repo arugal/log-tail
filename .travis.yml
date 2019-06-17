@@ -5,5 +5,5 @@ go:
   - 1.12.x
 
 install:
-  - export GO111MODULE=no
+  - export GO111MODULE=on
   - make log-tail
