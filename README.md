@@ -1,33 +1,69 @@
-log tail in web
+# log tail
 
 [![Build Status](https://travis-ci.org/Arugal/log-tail.svg?branch=master)](https://travis-ci.org/Arugal/log-tail)
 
+log-tail 是一个支持浏览器实时查看日志的小工具
 
 
-# go 安装
+## 目录
 
-+ go version >= 1.12
-+ [windowns安装](https://www.runoob.com/go/go-environment.html)
-+ [linux安装](https://www.runoob.com/go/go-environment.html)
+* [开发状态](#开发状态)
+* [快速启动](#快速启动)
+    * [直接启动](#直接启动)
+    * [部署为系统服务](#部署为系统服务)
+* [配置文件说明](#配置文件说明)
+* [开发计划](#开发计划)
 
 
-# 代码编译
-+ ```linux``` 如果有 ```make``` 直接执行 ```make all``` 接口,编译后的二进制文件在```bin/```目录，配置文件在```conf/```目录,
- 通过 ```-c``` 参数指定配置文件路径 例： ```./log-tail -c conf/log_tail.ini```
-+ ```windows``` 目前没有脚本，直接执行 ```go build -o bin/log-tail ./cmd``` 编译
-+ 出现 ```cannot find package``` 异常时，将环境变量 ```GO111MODULE``` 设置为 ```on```
+## 开发状态
+log-tail 仍然处于开发阶段，未经充分测试与验证，不推荐用于生产环境。
 
-# 注意
-+ ```go```只有在编译的时候需要```go```的环境,在各个```os```上需要重新编译，这点与```java```不一样
-+ 出现下载依赖超时异常添加环境变量```GOPROXY=https://goproxy.io```
+## 快速启动
 
-- TODO
+根据对应的操作系统以及架构，从[Release](https://github.com/Arugal/log-tail/releases)页面下载最新的版本的程序
+
+### 直接启动
+  ./log-tail -c log_tail.ini
+### 部署为系统服务
+   ...
+## 配置文件说明
+```
+[common] # 服务配置
+bind_addr = 127.0.0.1 # 服务绑定地址
+bind_port = 3000 # 服务监听端口
+# minute
+conn_max_time = 10 # 单个日志连接连接最长时间，单位:分钟
+# second
+heart_interval = 10 # 日志查看连接心跳间隔，单位:秒
+# console or real logFile path like ./log_tail.log
+log_file = ./log_tail.log # 日志输入目录
+# trace, debug, warn, error
+log_level = info # 日志登记
+log_max_days = 3 # 日志保存时间
+# set web address for control log-tail action by http api such as reload
+user = admin # 登陆页面账号，设置为空字符串既为无账号密码
+pwd = admin # 登陆页面密码
+# ignore file, the scope is global
+ignore_suffix = .jar,.war,.html,.js,.css,.java,.class,.gz,.tar,.zip,.rar,.jpg,.png,.xls,.xlxs,.pdf # 文件后缀过滤
+ignore_regexp = # 文件正则过滤
+# start reading position [size - offset:size]
+last_read_offset = 1000 # 日志开始读取位置
+assets_dir = "" # 指定前端代码地址
+
+[catalog1] # 浏览目录配置
+path = /var/application/logs # 日志目录路径
+# ignore file, the scope is this
+ignore_suffix = .txt # 文件后缀过滤
+ignore_regexp = # 文件正则过滤
+```
+
+## 开发计划
+
 - [ ] travis、Codecov集成
-- [x] 项目内引用路径切换
+- [x] 项目包路径切换
 - [ ] web自适应
 - [ ] 项目文档编写
 
-- Next TODO
 - [ ] 配置文件替换成Yaml文件
-- [ ] 查看目录配置热加载
+- [ ] 热加载配置文件
 - [ ] 微内核+可拓展模式的探索
