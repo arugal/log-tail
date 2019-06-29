@@ -21,5 +21,7 @@ log-tail:
 clean:
 	rm -f ./bin/log-tail
 
+web-update: web-build file
+
 web-build:
 	cd web && npm run build

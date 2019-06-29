@@ -41,5 +41,5 @@ func NewService() (srv *Service, err error) {
 func (srv *Service) Start() {
 	go srv.cm.Run()
 	go srv.cm2.Run()
-	go srv.RunDashboardServer(g.GlbServerCfg.BindAddr, g.GlbServerCfg.BindPort)
+	srv.RunDashboardServer(g.GlbServerCfg.BindAddr, g.GlbServerCfg.BindPort)
 }

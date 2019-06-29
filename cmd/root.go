@@ -9,8 +9,6 @@ import (
 	"github.com/Arugal/log-tail/util/version"
 	"github.com/spf13/cobra"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 )
 
@@ -127,9 +125,5 @@ func runServer() (err error) {
 		return err
 	}
 	svr.Start()
-
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, syscall.SIGINT, syscall.SIGTERM)
-	<-signalChan
-	return nil
+	return
 }
