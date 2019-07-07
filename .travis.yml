@@ -6,7 +6,7 @@ go:
 
 env:
   global:
-    GO111MODULE: on
+    GO111MODULE: "on"
 
 install:
   - make log-tail
