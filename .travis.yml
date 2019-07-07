@@ -4,6 +4,12 @@ language: go
 go:
   - 1.12.x
 
+env:
+  global:
+    GO111MODULE: on
+
 install:
-  - export GO111MODULE=on
   - make log-tail
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
