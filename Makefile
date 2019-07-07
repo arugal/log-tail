@@ -21,6 +21,10 @@ log-tail:
 clean:
 	rm -f ./bin/log-tail
 
+gotest:
+	go test -v --cover -race -coverprofile=coverage.txt -covermode=atomic ./tests/ci/...
+
+
 web-update: web-build file
 
 web-build:

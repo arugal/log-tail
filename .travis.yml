@@ -9,6 +9,7 @@ env:
     GO111MODULE: "on"
 
 install:
+  - make gotest
   - make log-tail
 
 after_success:
