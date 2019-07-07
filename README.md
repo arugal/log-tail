@@ -1,6 +1,8 @@
 # log tail
 
 [![Build Status](https://travis-ci.org/Arugal/log-tail.svg?branch=master)](https://travis-ci.org/Arugal/log-tail)
+[![Coverage](https://codecov.io/gh/Arugal/log-tail/branch/master/graph/badge.svg)](https://codecov.io/gh/Arugal/log-tail)
+
 
 log-tail 是一个支持浏览器实时查看日志的小工具
 
@@ -59,7 +61,7 @@ ignore_regexp = # 文件正则过滤
 
 ## 开发计划
 
-- [ ] travis、Codecov集成
+- [x] travis、Codecov集成
 - [x] 项目包路径切换
 - [ ] web自适应优化
 - [x] 项目文档编写
