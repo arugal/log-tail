@@ -38,12 +38,12 @@ conn_max_time = 10 # 单个日志连接连接最长时间，单位:分钟
 # second
 heart_interval = 10 # 日志查看连接心跳间隔，单位:秒
 # console or real logFile path like ./log_tail.log
-log_file = ./log_tail.log # 日志输入目录
+log_file = ./log_tail.log # 日志输出目录
 # trace, debug, warn, error
-log_level = info # 日志登记
+log_level = info # 日志等级
 log_max_days = 3 # 日志保存时间
 # set web address for control log-tail action by http api such as reload
-user = admin # 登陆页面账号，设置为空字符串既为无账号密码
+user = admin # 登陆页面账号，设置为空字符串即为无账号密码
 pwd = admin # 登陆页面密码
 # ignore file, the scope is global
 ignore_suffix = .jar,.war,.html,.js,.css,.java,.class,.gz,.tar,.zip,.rar,.jpg,.png,.xls,.xlxs,.pdf # 文件后缀过滤
