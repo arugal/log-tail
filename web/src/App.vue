@@ -33,7 +33,7 @@ export default {
   methods: {
     handleSelect(key, path) {
       if (key === "") {
-        window.open("https://github.com/Arugal/log-tail");
+        window.open("https://github.com/arugal/log-tail");
       }
     }
   }

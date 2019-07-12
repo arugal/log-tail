@@ -1,7 +1,7 @@
 # log tail
 
-[![Build Status](https://travis-ci.org/Arugal/log-tail.svg?branch=master)](https://travis-ci.org/Arugal/log-tail)
-[![Coverage](https://codecov.io/gh/Arugal/log-tail/branch/master/graph/badge.svg)](https://codecov.io/gh/Arugal/log-tail)
+[![Build Status](https://travis-ci.org/arugal/log-tail.svg?branch=master)](https://travis-ci.org/arugal/log-tail)
+[![Coverage](https://codecov.io/gh/arugal/log-tail/branch/master/graph/badge.svg)](https://codecov.io/gh/arugal/log-tail)
 
 
 log-tail 是一个支持浏览器实时查看日志的小工具
@@ -22,7 +22,7 @@ log-tail 仍然处于开发阶段，未经充分测试与验证，不推荐用�
 
 ## 快速启动
 
-根据对应的操作系统以及架构，从[Release](https://github.com/Arugal/log-tail/releases)页面下载最新的版本的程序
+根据对应的操作系统以及架构，从[Release](https://github.com/arugal/log-tail/releases)页面下载最新的版本的程序
 
 ### 直接启动
   ./log-tail -c log_tail.ini

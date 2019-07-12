@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/Arugal/log-tail/server/control"
+	"github.com/arugal/log-tail/server/control"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"net/http"

@@ -2,9 +2,9 @@ package control
 
 import (
 	"encoding/json"
-	"github.com/Arugal/log-tail/g"
-	"github.com/Arugal/log-tail/models/config"
-	"github.com/Arugal/log-tail/util/log"
+	"github.com/arugal/log-tail/g"
+	"github.com/arugal/log-tail/models/config"
+	"github.com/arugal/log-tail/util/log"
 	"github.com/gorilla/websocket"
 	"github.com/hpcloud/tail"
 	"os"

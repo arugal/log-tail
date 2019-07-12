@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/Arugal/log-tail/g"
-	"github.com/Arugal/log-tail/models/config"
-	"github.com/Arugal/log-tail/server"
-	"github.com/Arugal/log-tail/util/log"
-	"github.com/Arugal/log-tail/util/version"
+	"github.com/arugal/log-tail/g"
+	"github.com/arugal/log-tail/models/config"
+	"github.com/arugal/log-tail/server"
+	"github.com/arugal/log-tail/util/log"
+	"github.com/arugal/log-tail/util/version"
 	"github.com/spf13/cobra"
 	"os"
 	"time"

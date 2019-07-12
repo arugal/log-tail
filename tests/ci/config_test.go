@@ -1,7 +1,7 @@
 package ci
 
 import (
-	"github.com/Arugal/log-tail/models/config"
+	"github.com/arugal/log-tail/models/config"
 	"regexp"
 	"testing"
 )
