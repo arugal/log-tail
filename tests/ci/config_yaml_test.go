@@ -1,21 +1,16 @@
 package ci
 
 import (
+	"github.com/arugal/log-tail/g"
 	"github.com/arugal/log-tail/models/config2"
-	"gopkg.in/yaml.v2"
-	"io/ioutil"
 	"testing"
 )
 
 var confMap map[string]interface{}
 
 func init() {
-	confMap = map[string]interface{}{}
-	buffer, err := ioutil.ReadFile("./config.yaml")
-	if err != nil {
-		panic(err)
-	}
-	err = yaml.Unmarshal(buffer, &confMap)
+	var err error
+	confMap, err = config2.ReaderConfigFromYaml("./config.yaml")
 	if err != nil {
 		panic(err)
 	}
@@ -29,21 +24,21 @@ func assert(conf interface{}, err error, t *testing.T) {
 }
 
 func TestServerYamlParse(t *testing.T) {
-	server := confMap["server"]
+	server := confMap[g.Server]
 	severMap := server.(map[interface{}]interface{})
 	serverCfg, err := config2.UnmarshalServerConfFromYaml(severMap)
 	assert(serverCfg, err, t)
 }
 
 func TestCommonYamlParse(t *testing.T) {
-	common := confMap["common"]
+	common := confMap[g.Common]
 	commonMap := common.(map[interface{}]interface{})
 	commonCfg, err := config2.UnmarshalCommonConfFromYaml(commonMap)
 	assert(commonCfg, err, t)
 }
 
 func TestCatalogYamlParse(t *testing.T) {
-	catalog := confMap["catalogs"]
+	catalog := confMap[g.Catalogs]
 	cataLogSlice := catalog.([]interface{})
 	catalogConfs, err := config2.UnmarshalCatalogConfFromYaml(cataLogSlice)
 	assert(catalogConfs, err, t)

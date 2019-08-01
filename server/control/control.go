@@ -106,7 +106,7 @@ func (cc *ConnManager) ProcessNewConn() {
 func (cc *ConnManager) CheckHeartTimeout() {
 	if len(cc.carrieMap) > 0 {
 		currentTime := time.Now().Unix()
-		heartInterval := int64(g.GlbServerCfg.HeartInterval/time.Second) * 2 // s
+		heartInterval := int64(g.CommonCnf.HeartIntervalFunc()/time.Second) * 2 // s
 		cc.log.Trace("go check heart time out %d - %d carries:%d", currentTime, heartInterval, len(cc.carrieMap))
 
 		for _, carrier := range cc.carrieMap {
@@ -124,7 +124,7 @@ func (cc *ConnManager) CheckHeartTimeout() {
 
 func (cc *ConnManager) CheckConnMaxTime() {
 	if len(cc.carrieMap) > 0 {
-		deadline := time.Now().Unix() - int64(g.GlbServerCfg.ConnMaxTime/time.Second) // s
+		deadline := time.Now().Unix() - int64(g.CommonCnf.ConnMaxTimeFunc()/time.Second) // s
 		cc.log.Trace("go check conn max time %d carries:%d", deadline, len(cc.carrieMap))
 
 		for _, carrier := range cc.carrieMap {
@@ -178,7 +178,7 @@ func (cc *ConnCarrier) Handler() {
 			cc.log.Debug("Hander done %s", cc.String())
 			return
 		default:
-			_ = cc.Conn.SetReadDeadline(time.Now().Add(time.Duration(g.GlbServerCfg.HeartInterval) * 2))
+			_ = cc.Conn.SetReadDeadline(time.Now().Add(g.CommonCnf.HeartIntervalFunc() * 2))
 			msgType, msg, err := cc.Conn.ReadMessage()
 			if err != nil {
 				cc.log.Error("Read message err case:%v", err)
@@ -204,8 +204,8 @@ func (cc *ConnCarrier) Handler() {
 					return
 				}
 				var offset int64
-				if fileInfo.Size() > g.GlbServerCfg.LastReadOffset {
-					offset = fileInfo.Size() - g.GlbServerCfg.LastReadOffset
+				if fileInfo.Size() > g.CommonCnf.LastReadOffset {
+					offset = fileInfo.Size() - g.CommonCnf.LastReadOffset
 				} else {
 					offset = 0
 				}
@@ -238,7 +238,7 @@ func (cc *ConnCarrier) Handler() {
 				}(cc, req.LineNum(), msgType)
 				resp := TailRespProtocol{
 					Type: Heart,
-					Msg:  g.GlbServerCfg.HeartInterval.String(),
+					Msg:  g.CommonCnf.HeartIntervalFunc().String(),
 				}
 				buf, _ := json.Marshal(resp)
 				_ = cc.Conn.SetWriteDeadline(time.Now().Add(time.Second))

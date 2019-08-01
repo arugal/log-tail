@@ -2,6 +2,8 @@ package config2
 
 import (
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io/ioutil"
 	"reflect"
 	"strings"
 	"time"
@@ -32,6 +34,7 @@ type CommonConf struct {
 	HeartIntervalDuration time.Duration `json:"heart_interval_duration"`
 	Log                   *LogConf      `json:"log"`
 	Ignore                *IgnoreConf   `json:"ignore"`
+	CfgFile               string        `json:"cfg_file"`
 }
 
 func (cnf CommonConf) Verify() bool {
@@ -43,6 +46,14 @@ func (cnf CommonConf) Verify() bool {
 		return false
 	}
 	return true
+}
+
+func (cnf CommonConf) HeartIntervalFunc() time.Duration {
+	return cnf.HeartIntervalDuration * time.Duration(cnf.HeartInterval)
+}
+
+func (cnf CommonConf) ConnMaxTimeFunc() time.Duration {
+	return cnf.ConnMaxTimeDuration * time.Duration(cnf.ConnMaxTime)
 }
 
 type CatalogsConf struct {
@@ -81,9 +92,10 @@ func (cnf SecureConf) Verify() bool {
 }
 
 type CatalogConf struct {
-	Name   string      `json:"name"`
-	Path   string      `json:"path"`
-	Ignore *IgnoreConf `json:"ignore"`
+	Name      string      `json:"name"`
+	Path      string      `json:"path"`
+	Ignore    *IgnoreConf `json:"ignore"`
+	ChildFile []string    `json:"child_file"`
 }
 
 func (cnf CatalogConf) Verify() bool {
@@ -151,7 +163,7 @@ func GetDefaultCatalogConf() *CatalogConf {
 
 func UnmarshalServerConfFromYaml(confMap map[interface{}]interface{}) (*ServerConf, error) {
 	cfg := GetDefaultServerConf()
-	err := FillConfFromMap(confMap, cfg)
+	err := fillConfFromMap(confMap, cfg)
 
 	if err != nil {
 		return nil, err
@@ -161,7 +173,7 @@ func UnmarshalServerConfFromYaml(confMap map[interface{}]interface{}) (*ServerCo
 
 func UnmarshalCommonConfFromYaml(confMap map[interface{}]interface{}) (*CommonConf, error) {
 	cfg := GetDefaultCommonConf()
-	err := FillConfFromMap(confMap, cfg)
+	err := fillConfFromMap(confMap, cfg)
 
 	if err != nil {
 		return nil, err
@@ -173,7 +185,7 @@ func UnmarshalCommonConfFromYaml(confMap map[interface{}]interface{}) (*CommonCo
 func UnmarshalCatalogConfFromYaml(confSlice []interface{}) (*CatalogsConf, error) {
 	cfg := GetDefaultCatalogsConf()
 
-	err := FillConfFromSlice(confSlice, cfg)
+	err := fillConfFromSlice(confSlice, cfg)
 
 	if err != nil {
 		return nil, err
@@ -181,10 +193,10 @@ func UnmarshalCatalogConfFromYaml(confSlice []interface{}) (*CatalogsConf, error
 	return cfg, nil
 }
 
-func FillConfFromSlice(confSlice []interface{}, conf *CatalogsConf) error {
+func fillConfFromSlice(confSlice []interface{}, conf *CatalogsConf) error {
 	for _, confMap := range confSlice {
 		childCnf := GetDefaultCatalogConf()
-		err := FillConfFromMap(confMap.(map[interface{}]interface{}), childCnf)
+		err := fillConfFromMap(confMap.(map[interface{}]interface{}), childCnf)
 		if err != nil {
 			return err
 		}
@@ -193,7 +205,7 @@ func FillConfFromSlice(confSlice []interface{}, conf *CatalogsConf) error {
 	return nil
 }
 
-func FillConfFromMap(confMap map[interface{}]interface{}, conf Conf) error {
+func fillConfFromMap(confMap map[interface{}]interface{}, conf Conf) error {
 	for k, v := range confMap {
 		if v == nil {
 			continue
@@ -259,7 +271,17 @@ func typeConversion(value interface{}, rowValue interface{}) (reflect.Value, err
 		}
 		return reflect.ValueOf(strValue), nil
 	default:
-		err := FillConfFromMap(value.(map[interface{}]interface{}), rowValue.(Conf))
+		err := fillConfFromMap(value.(map[interface{}]interface{}), rowValue.(Conf))
 		return reflect.ValueOf(rowValue), err
 	}
+}
+
+func ReaderConfigFromYaml(path string) (configMap map[string]interface{}, err error) {
+	buffer, err := ioutil.ReadFile(path)
+	if err != nil {
+		return
+	}
+
+	err = yaml.Unmarshal(buffer, &configMap)
+	return
 }

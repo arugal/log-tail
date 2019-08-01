@@ -3,7 +3,7 @@ package catalog
 import (
 	"fmt"
 	"github.com/arugal/log-tail/g"
-	"github.com/arugal/log-tail/models/config"
+	"github.com/arugal/log-tail/models/config2"
 	"github.com/arugal/log-tail/util/log"
 	"io/ioutil"
 	"os"
@@ -13,30 +13,20 @@ import (
 )
 
 type CatalogManger struct {
-	catalogs map[string]*config.CatalogConf
+	catalogs map[string]*config2.CatalogConf
 	log      log.Logger
 }
 
 func NewCataLogManager() (cm *CatalogManger, err error) {
 	cm = &CatalogManger{
-		catalogs: map[string]*config.CatalogConf{},
+		catalogs: map[string]*config2.CatalogConf{},
 		log:      log.NewPrefixLogger("catalog-manager"),
 	}
 
-	content, err := config.GetRenderedConfFromFile(g.GlbServerCfg.CfgFile)
-	if err != nil {
-		return nil, err
-	}
-
-	catalogs, err := config.LoadAllCatalogFromIni(content)
-	if err != nil {
-		return nil, err
-	}
-
-	ok := cm.AddCatalogs(catalogs)
+	ok := cm.AddCatalogs(g.CatalogsCnf.Catalogs)
 	if !ok {
 		return nil, fmt.Errorf("init CatalogMager failure, please invalid cfgFile %s and see the log %s",
-			g.GlbServerCfg.CfgFile, g.GlbServerCfg.LogFile)
+			g.CommonCnf.CfgFile, g.CommonCnf.Log.File)
 	}
 	return cm, nil
 }
@@ -55,67 +45,67 @@ func (m *CatalogManger) Run() {
 	}(m)
 }
 
-func (m *CatalogManger) GetCatalogInfo(catalog string) (conf config.CatalogConf, ok bool) {
+func (m *CatalogManger) GetCatalogInfo(catalog string) (conf config2.CatalogConf, ok bool) {
 	realCf, ok := m.catalogs[catalog]
 	conf = *realCf
 	return
 }
 
-func (m *CatalogManger) GetAllCatalogInfo() map[string]*config.CatalogConf {
+func (m *CatalogManger) GetAllCatalogInfo() map[string]*config2.CatalogConf {
 	return m.catalogs
 }
 
 func (m *CatalogManger) refreshAllCatalog() {
-	for name, conf := range m.catalogs {
-		childFile, err := m.refreshCatalog(name, conf)
+	for _, cnf := range m.catalogs {
+		childFile, err := m.refreshCatalog(cnf)
 		if err != nil {
-			log.Warn("interval refresh catalog failure [%s] : %s case:%v", name, conf.Path, err)
+			log.Warn("interval refresh catalog failure [%s] : %s case:%v", cnf.Name, cnf.Path, err)
 		} else {
-			conf.ChildFile = childFile
+			cnf.ChildFile = childFile
 		}
 	}
 }
 
-func (m *CatalogManger) AddCatalogs(catalogs map[string]*config.CatalogConf) (ok bool) {
-	for name, conf := range catalogs {
-		childFile, err := m.refreshCatalog(name, conf)
+func (m *CatalogManger) AddCatalogs(catalogs []*config2.CatalogConf) (ok bool) {
+	for _, cnf := range catalogs {
+		childFile, err := m.refreshCatalog(cnf)
 		if err != nil {
-			log.Warn("refresh catalog failure [%s] : %s case:%v", conf.Name, conf.Path, err)
+			log.Warn("refresh catalog failure [%s] : %s case:%v", cnf.Name, cnf.Path, err)
 			return false
 		}
-		conf.ChildFile = childFile
-		m.catalogs[name] = conf
+		cnf.ChildFile = childFile
+		m.catalogs[cnf.Name] = cnf
 	}
 	return true
 }
 
-func (m *CatalogManger) AddCataLog(name string, conf *config.CatalogConf) (ok bool) {
-	childFile, err := m.refreshCatalog(name, conf)
+func (m *CatalogManger) AddCataLog(cnf *config2.CatalogConf) (ok bool) {
+	childFile, err := m.refreshCatalog(cnf)
 	if err != nil {
-		log.Warn("refresh catalog failure [%s] : %s case:%v", conf.Name, conf.Path, err)
+		log.Warn("refresh catalog failure [%s] : %s case:%v", cnf.Name, cnf.Path, err)
 		return false
 	}
-	conf.ChildFile = childFile
-	m.catalogs[name] = conf
+	cnf.ChildFile = childFile
+	m.catalogs[cnf.Name] = cnf
 	return true
 }
 
-func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (childFile []string, err error) {
-	log.Debug("refresh catalog [%s] : %v", name, conf)
-	pathInfo, err := os.Stat(conf.Path)
+func (m *CatalogManger) refreshCatalog(cnf *config2.CatalogConf) (childFile []string, err error) {
+	log.Debug("refresh catalog [%s] : %v", cnf.Name, cnf)
+	pathInfo, err := os.Stat(cnf.Path)
 	if err != nil {
 		return nil, err
 	}
 
 	if !pathInfo.IsDir() {
-		return nil, &UnDirectoryError{Path: conf.Path}
+		return nil, &UnDirectoryError{Path: cnf.Path}
 	}
 
 	childFile = []string{}
-	fileInfos, _ := ioutil.ReadDir(conf.Path)
+	fileInfos, _ := ioutil.ReadDir(cnf.Path)
 	for _, fileInfo := range fileInfos {
 		var ignore = false
-		for _, suffix := range conf.IgnoreSuffixs {
+		for _, suffix := range cnf.Ignore.Suffix {
 			if strings.HasSuffix(fileInfo.Name(), suffix) {
 				ignore = true
 				break
@@ -123,7 +113,7 @@ func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (c
 		}
 
 		if !ignore {
-			for _, reg := range conf.IgnoreRegexp {
+			for _, reg := range cnf.Ignore.Regexp {
 				match, _ := regexp.MatchString(reg, fileInfo.Name())
 				if match {
 					ignore = true
@@ -133,7 +123,7 @@ func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (c
 		}
 
 		if !ignore {
-			for _, suffix := range g.GlbServerCfg.IgnoreSuffix {
+			for _, suffix := range g.CommonCnf.Ignore.Suffix {
 				if strings.HasSuffix(fileInfo.Name(), suffix) {
 					ignore = true
 					break
@@ -142,7 +132,7 @@ func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (c
 		}
 
 		if !ignore {
-			for _, reg := range g.GlbServerCfg.IgnoreRegexp {
+			for _, reg := range g.CommonCnf.Ignore.Regexp {
 				match, _ := regexp.MatchString(reg, fileInfo.Name())
 				if match {
 					ignore = true
@@ -152,21 +142,21 @@ func (m *CatalogManger) refreshCatalog(name string, conf *config.CatalogConf) (c
 		}
 
 		if ignore {
-			log.Debug("ignore suffix [%s] : %s", conf.Name, fileInfo.Name())
+			log.Debug("ignore suffix [%s] : %s", cnf.Name, fileInfo.Name())
 			continue
 		}
 
-		fullPath := conf.Path + "/" + fileInfo.Name()
+		fullPath := cnf.Path + "/" + fileInfo.Name()
 		// file
 		if fileInfo.IsDir() {
-			log.Debug("ignore is folder [%s] : %s", conf.Name, fileInfo.Name())
+			log.Debug("ignore is folder [%s] : %s", cnf.Name, fileInfo.Name())
 			continue
 		}
 
 		// read
 		file, err := os.OpenFile(fullPath, os.O_RDONLY, 0666)
 		if err != nil {
-			log.Debug("ignore dot not read [%s] : %s case:%v", conf.Name, fileInfo.Name(), err)
+			log.Debug("ignore dot not read [%s] : %s case:%v", cnf.Name, fileInfo.Name(), err)
 			continue
 		} else {
 			_ = file.Close()

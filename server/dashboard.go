@@ -17,15 +17,15 @@ var (
 	httpServerWriteTimeout = 10 * time.Second
 )
 
-func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
+func (srv *Service) RunDashboardServer(addr string, port int) (err error) {
 	// url router
 	router := mux.NewRouter()
 	router.Use(tailNet.NewHttpAuthMiddleware(g.GlbServerCfg.User, g.GlbServerCfg.Pwd).Middleware)
 	router.Use(tailNet.NewCrossDomainMiddleware().Middleware)
 
 	// api
-	router.HandleFunc("/api/catalog", svr.GetCataLogInfo).Methods("GET")
-	router.HandleFunc("/api/tail/{catalog}/{file}", svr.GetLogTail)
+	router.HandleFunc("/api/catalog", srv.GetCataLogInfo).Methods("GET")
+	router.HandleFunc("/api/tail/{catalog}/{file}", srv.GetLogTail)
 
 	// view
 	router.Handle("/favicon.ico", http.FileServer(assets.FileSystem)).Methods("GET")
@@ -57,7 +57,7 @@ func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 		return err
 	}
 
-	svr.log.Info("Start Dashboard listen %s", ln.Addr())
+	srv.log.Info("Start Dashboard listen %s", ln.Addr())
 	server.Serve(ln)
 	return nil
 }
