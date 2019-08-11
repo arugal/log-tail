@@ -105,6 +105,19 @@ func (cnf CatalogConf) Verify() bool {
 	return true
 }
 
+func (cnf *CatalogConf) HasChildFile(childfile string) (ok bool) {
+	for _, file := range cnf.ChildFile {
+		if file == childfile {
+			return true
+		}
+	}
+	return false
+}
+
+func (cnf *CatalogConf) FullFilePath(filePath string) string {
+	return cnf.Path + "/" + filePath
+}
+
 type IgnoreConf struct {
 	Suffix []string `json:"suffix"`
 	Regexp []string `json:"regexp"`

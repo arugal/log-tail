@@ -3,7 +3,7 @@ package control
 import (
 	"encoding/json"
 	"github.com/arugal/log-tail/g"
-	"github.com/arugal/log-tail/models/config"
+	"github.com/arugal/log-tail/models/config2"
 	"github.com/arugal/log-tail/util/log"
 	"github.com/gorilla/websocket"
 	"github.com/hpcloud/tail"
@@ -57,7 +57,9 @@ func NewConnManager() *ConnManager {
 
 func (cc *ConnManager) Run() {
 	go func() {
-		cc.log.Info("Start ConnManager heartInterval %s maxInterval:%s", time.Second.String(), time.Minute.String())
+		commonCnf := g.CommonCnf
+		cc.log.Info("Start ConnManager heartInterval %s maxInterval:%s",
+			commonCnf.HeartIntervalDuration.String(), commonCnf.ConnMaxTimeDuration.String())
 		heartTimer := time.NewTicker(time.Second)
 		maxTimer := time.NewTicker(time.Minute)
 		for {
@@ -143,7 +145,7 @@ func (cc *ConnManager) CheckConnMaxTime() {
 type ConnCarrier struct {
 	id            uint64
 	Conn          *websocket.Conn
-	Cf            config.CatalogConf
+	Cf            config2.CatalogConf
 	File          string
 	Tail          *tail.Tail
 	StartTime     int64
@@ -155,7 +157,7 @@ type ConnCarrier struct {
 	log           log.Logger
 }
 
-func NewConnCarrier(cm *ConnManager, conn *websocket.Conn, cf config.CatalogConf, file string) ConnCarrier {
+func NewConnCarrier(cm *ConnManager, conn *websocket.Conn, cf config2.CatalogConf, file string) ConnCarrier {
 	return ConnCarrier{
 		id:            cm.GenerateCarrierId(),
 		Conn:          conn,

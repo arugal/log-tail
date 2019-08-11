@@ -1,7 +1,6 @@
 package server
 
 import (
-	"github.com/arugal/log-tail/g"
 	"github.com/arugal/log-tail/server/catalog"
 	"github.com/arugal/log-tail/server/control"
 	"github.com/arugal/log-tail/util/log"
@@ -30,5 +29,5 @@ func NewService() (srv *Service, err error) {
 func (srv *Service) Start() {
 	go srv.cm.Run()
 	go srv.cm2.Run()
-	srv.RunDashboardServer(g.ServerCnf.Host, g.ServerCnf.Port)
+	srv.RunDashboardServer()
 }

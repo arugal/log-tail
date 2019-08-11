@@ -25,7 +25,7 @@ const (
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "./config.yaml", "config file of log-tail")
 	rootCmd.PersistentFlags().BoolVarP(&showVersion, "version", "v", false, "version of log-tail")
-	rootCmd.PersistentFlags().StringVarP(&bindAddr, "host", "h", "-", "host of log-tail")
+	rootCmd.PersistentFlags().StringVarP(&bindAddr, "host", "H", "-", "host of log-tail")
 	rootCmd.PersistentFlags().IntVarP(&bindPort, "port", "p", -1, "port of log-tail")
 	rootCmd.PersistentFlags().StringVarP(&logLevel, "loglevel", "l", "-", "log level of log-tail")
 }

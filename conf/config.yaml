@@ -1,0 +1,27 @@
+server:
+  host: 127.0.0.1
+  port: 3001
+  secure:
+    user: test
+    pwd: test
+common:
+  last_read_offset: 1
+  conn_max_time: 1
+  heart_interval: 1
+  log:
+    file: log.out
+    level: info
+    max_days: 1
+  ignore:
+    suffix:
+      - .jar
+      - .war
+    regexp:
+      - "*log.*"
+
+catalogs:
+  - name: path1
+    path: /Users/zhangwei/Documents/Code/github/log-tail/conf
+    ignore:
+      suffix:
+        - .txt

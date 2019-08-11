@@ -17,10 +17,12 @@ var (
 	httpServerWriteTimeout = 10 * time.Second
 )
 
-func (srv *Service) RunDashboardServer(addr string, port int) (err error) {
+func (srv *Service) RunDashboardServer() (err error) {
+	serverCnf := g.ServerCnf
+
 	// url router
 	router := mux.NewRouter()
-	router.Use(tailNet.NewHttpAuthMiddleware(g.GlbServerCfg.User, g.GlbServerCfg.Pwd).Middleware)
+	router.Use(tailNet.NewHttpAuthMiddleware(serverCnf.Secure.User, serverCnf.Secure.Pwd).Middleware)
 	router.Use(tailNet.NewCrossDomainMiddleware().Middleware)
 
 	// api
@@ -40,7 +42,7 @@ func (srv *Service) RunDashboardServer(addr string, port int) (err error) {
 		http.Redirect(w, r, "/static/index.html", http.StatusMovedPermanently)
 	})
 
-	address := fmt.Sprintf("%s:%d", addr, port)
+	address := fmt.Sprintf("%s:%d", serverCnf.Host, serverCnf.Port)
 	if address == "" {
 		address = ":3000"
 	}
