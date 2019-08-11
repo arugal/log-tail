@@ -31,39 +31,45 @@ log-tail 仍然处于开发阶段，未经充分测试与验证，不推荐用�
    ...
 ## 命令说明
 ```
-  -c, --ci string   ci file of log-tail (default "./log_tail.ini")
-  -h, --help        help for log-tail
-  -v, --version     version of log-tail
+  -c, --config string     config file of log-tail (default "./config.yaml")
+  -h, --help              help for log-tail
+  -H, --host string       host of log-tail (default "-")
+  -l, --loglevel string   log level of log-tail (default "-")
+  -p, --port int          port of log-tail (default -1)
+  -v, --version           version of log-tail
+
 ```
 ## 配置文件说明
 ```
-[common] # 服务配置
-bind_addr = 127.0.0.1 # 服务绑定地址
-bind_port = 3000 # 服务监听端口
-# minute
-conn_max_time = 10 # 单个日志查看连接最长时间（到时自动关闭连接），单位:分钟
-# second
-heart_interval = 10 # 日志查看窗口连接心跳间隔（超时自动关闭连接），单位:秒
-# console or real logFile path like ./log_tail.log
-log_file = ./log_tail.log # 日志输出目录
-# trace, debug, warn, error
-log_level = info # 日志等级
-log_max_days = 3 # 日志保存时间
-# set web address for control log-tail action by http api such as reload
-user = admin # 登陆页面账号，设置为空字符串即为无账号密码
-pwd = admin # 登陆页面密码
-# ignore file, the scope is global
-ignore_suffix = .jar,.war,.html,.js,.css,.java,.class,.gz,.tar,.zip,.rar,.jpg,.png,.xls,.xlxs,.pdf # 文件后缀过滤
-ignore_regexp = # 文件正则过滤
-# start reading position [size - offset:size]
-last_read_offset = 1000 # 日志开始读取位置
-assets_dir = "" # 指定前端代码地址
+server:
+  host: 127.0.0.1 # 服务绑定地址
+  port: 3000 # 服务监听端口
+  secure:
+    user: admin # 登陆页面账号，设置为空字符串即为无账号密码
+    pwd: admin # 登陆页面密码
+common:
+  last_read_offset: 1000 # 日志开始读取位置
+  conn_max_time: 10 # 单个日志查看连接最长时间（到时自动关闭连接），单位:分钟
+  heart_interval: 10 # 日志查看窗口连接心跳间隔（超时自动关闭连接），单位:秒
+  log:
+    file: console # 日志输出目录，设置为console时输出在控制台
+    level: info # 日志等级：trace, debug, warn, error
+    max_days: 1 # 日志保存时间
+  ignore: # ignore file, the scope is global
+    suffix: # 文件后缀过滤
+      - .jar
+      - .war
+    regexp: # 文件正则过滤
+      - "*.log.*"
 
-[catalog1] # 浏览目录配置，可配置多个目录
-path = /var/application/logs # 日志目录路径
-# ignore file, the scope is this
-ignore_suffix = .txt # 文件后缀过滤
-ignore_regexp = # 文件正则过滤
+catalogs: # 浏览目录配置，可配置多个目录
+  - name: app1
+    path: /tmp/app1/logs # 日志目录路径
+    ignore:
+      suffix: # 文件后缀过滤
+        - .txt
+      regexp: # 文件正则过滤
+        - "*.out.*"
 ```
 
 ## 开发计划
@@ -73,6 +79,6 @@ ignore_regexp = # 文件正则过滤
 - [ ] web自适应优化
 - [x] 项目文档编写
 
-- [ ] 配置文件替换成Yaml文件
+- [x] 配置文件替换成Yaml文件
 - [ ] 热加载配置文件
 - [ ] 微内核+可拓展模式的探索
