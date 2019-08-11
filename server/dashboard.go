@@ -2,14 +2,14 @@ package server
 
 import (
 	"fmt"
-	"github.com/Arugal/log-tail/assets"
-	"github.com/Arugal/log-tail/g"
+	"github.com/arugal/log-tail/assets"
+	"github.com/arugal/log-tail/g"
 	"github.com/gorilla/mux"
 	"net"
 	"net/http"
 	"time"
 
-	tailNet "github.com/Arugal/log-tail/util/net"
+	tailNet "github.com/arugal/log-tail/util/net"
 )
 
 var (
@@ -17,15 +17,23 @@ var (
 	httpServerWriteTimeout = 10 * time.Second
 )
 
-func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
+func (srv *Service) RunDashboardServer() (err error) {
+	serverCnf := g.ServerCnf
+
+	// load static resource
+	err = assets.Load("")
+	if err != nil {
+		return err
+	}
+
 	// url router
 	router := mux.NewRouter()
-	router.Use(tailNet.NewHttpAuthMiddleware(g.GlbServerCfg.User, g.GlbServerCfg.Pwd).Middleware)
+	router.Use(tailNet.NewHttpAuthMiddleware(serverCnf.Secure.User, serverCnf.Secure.Pwd).Middleware)
 	router.Use(tailNet.NewCrossDomainMiddleware().Middleware)
 
 	// api
-	router.HandleFunc("/api/catalog", svr.GetCataLogInfo).Methods("GET")
-	router.HandleFunc("/api/tail/{catalog}/{file}", svr.GetLogTail)
+	router.HandleFunc("/api/catalog", srv.GetCataLogInfo).Methods("GET")
+	router.HandleFunc("/api/tail/{catalog}/{file}", srv.GetLogTail)
 
 	// view
 	router.Handle("/favicon.ico", http.FileServer(assets.FileSystem)).Methods("GET")
@@ -40,7 +48,7 @@ func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 		http.Redirect(w, r, "/static/index.html", http.StatusMovedPermanently)
 	})
 
-	address := fmt.Sprintf("%s:%d", addr, port)
+	address := fmt.Sprintf("%s:%d", serverCnf.Host, serverCnf.Port)
 	if address == "" {
 		address = ":3000"
 	}
@@ -57,7 +65,7 @@ func (svr *Service) RunDashboardServer(addr string, port int) (err error) {
 		return err
 	}
 
-	svr.log.Info("Start Dashboard listen %s", ln.Addr())
+	srv.log.Info("Start Dashboard listen %s", ln.Addr())
 	server.Serve(ln)
 	return nil
 }

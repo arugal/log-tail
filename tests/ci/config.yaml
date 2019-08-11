@@ -1,0 +1,32 @@
+server:
+  host: 127.0.0.1
+  port: 3001
+  secure:
+    user: test
+    pwd: test
+common:
+  last_read_offset: 1
+  conn_max_time: 1
+  heart_interval: 1
+  log:
+    file: log.out
+    level: debug
+    max_days: 1
+  ignore:
+    suffix:
+      - .jar
+      - .war
+    regexp:
+      - "*log.*"
+
+catalogs:
+  - name: path1
+    path: /var/application1/logs
+    ignore:
+      suffix:
+        - .txt
+  - name: path2
+    path: /var/application2/logs
+    ignore:
+      suffix:
+        - .txt

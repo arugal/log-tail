@@ -1,20 +1,51 @@
 package g
 
 import (
-	"github.com/Arugal/log-tail/models/config"
+	"github.com/arugal/log-tail/models/config2"
+)
+
+const (
+	Server   = "server"
+	Common   = "common"
+	Catalogs = "catalogs"
 )
 
 var (
-	GlbServerCfg *ServerCfg
+	ServerCnf   = config2.GetDefaultServerConf()
+	CommonCnf   = config2.GetDefaultCommonConf()
+	CatalogsCnf = config2.GetDefaultCatalogsConf()
 )
 
-func init() {
-	GlbServerCfg = &ServerCfg{
-		ServerCommonConf: *config.GetDefaultServerConf(),
+func Load(cfgFile string) error {
+	cnfMap, err := config2.ReaderConfigFromYaml(cfgFile)
+	if err != nil {
+		return err
 	}
-}
 
-type ServerCfg struct {
-	config.ServerCommonConf
-	CfgFile string
+	server := cnfMap[Server]
+	if server != nil {
+		severMap := server.(map[interface{}]interface{})
+		ServerCnf, err = config2.UnmarshalServerConfFromYaml(severMap)
+		if err != nil {
+			return err
+		}
+	}
+
+	common := cnfMap[Common]
+	if common != nil {
+		commonMap := common.(map[interface{}]interface{})
+		CommonCnf, err = config2.UnmarshalCommonConfFromYaml(commonMap)
+
+		if err != nil {
+			return err
+		}
+	}
+	CommonCnf.CfgFile = cfgFile
+
+	catalog := cnfMap[Catalogs]
+	if catalog != nil {
+		cataLogSlice := catalog.([]interface{})
+		CatalogsCnf, err = config2.UnmarshalCatalogConfFromYaml(cataLogSlice)
+	}
+	return err
 }

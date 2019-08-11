@@ -2,7 +2,7 @@ package server
 
 import (
 	"encoding/json"
-	"github.com/Arugal/log-tail/server/control"
+	"github.com/arugal/log-tail/server/control"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"net/http"
@@ -39,17 +39,17 @@ func Write(svr *Service, res *GeneralResponse, w http.ResponseWriter, r *http.Re
 	}
 }
 
-func (svr *Service) GetCataLogInfo(w http.ResponseWriter, r *http.Request) {
+func (srv *Service) GetCataLogInfo(w http.ResponseWriter, r *http.Request) {
 	res := GeneralResponse{Code: 200}
-	defer Write(svr, &res, w, r)
-	svr.log.Info("Http requst: [%s]", r.URL.Path)
-	reps := svr.GetCataLog()
+	defer Write(srv, &res, w, r)
+	srv.log.Info("Http requst: [%s]", r.URL.Path)
+	reps := srv.GetCataLog()
 	buf, _ := json.Marshal(reps)
 	res.Msg = string(buf)
 }
 
-func (svr *Service) GetCataLog() (reps []GetCataLogInfo) {
-	catalogs := svr.cm.GetAllCatalogInfo()
+func (srv *Service) GetCataLog() (reps []GetCataLogInfo) {
+	catalogs := srv.cm.GetAllCatalogInfo()
 	for _, conf := range catalogs {
 		info := GetCataLogInfo{
 			Catalog:   conf.Name,
@@ -60,36 +60,36 @@ func (svr *Service) GetCataLog() (reps []GetCataLogInfo) {
 	return
 }
 
-func (svr *Service) GetLogTail(w http.ResponseWriter, r *http.Request) {
+func (srv *Service) GetLogTail(w http.ResponseWriter, r *http.Request) {
 	res := GeneralResponse{Code: 200}
 	params := mux.Vars(r)
 	catalog := params["catalog"]
 	file := params["file"]
 
-	svr.log.Info("Http request: [%s]", r.URL.Path)
+	srv.log.Info("Http request: [%s]", r.URL.Path)
 
-	cf, ok := svr.cm.GetCatalogInfo(catalog)
+	cf, ok := srv.cm.GetCatalogInfo(catalog)
 	if ok {
 		if cf.HasChildFile(file) {
 			conn, err := upgrader.Upgrade(w, r, nil)
 			if err != nil {
-				svr.log.Error("Upgrader websocket failing [%s] case:%v", r.URL.Path, err)
+				srv.log.Error("Upgrader websocket failing [%s] case:%v", r.URL.Path, err)
 				res.Code = 500
 				info := ErrorInfo{Err: err, Msg: "Upgrader websocket failing"}
 				buf, _ := json.Marshal(info)
 				res.Msg = string(buf)
-				Write(svr, &res, w, r)
+				Write(srv, &res, w, r)
 				return
 			}
-			carrier := control.NewConnCarrier(svr.cm2, conn, cf, file)
-			svr.cm2.AddConnCarrier(&carrier)
+			carrier := control.NewConnCarrier(srv.cm2, conn, cf, file)
+			srv.cm2.AddConnCarrier(&carrier)
 			return
 		} else {
-			svr.log.Error("Http request: [%s] child file miss [%s]", r.URL.Path, file)
+			srv.log.Error("Http request: [%s] child file miss [%s]", r.URL.Path, file)
 		}
 	} else {
-		svr.log.Error("Http request: [%s] catalog miss [%s]", r.URL.Path, catalog)
+		srv.log.Error("Http request: [%s] catalog miss [%s]", r.URL.Path, catalog)
 	}
 	res.Code = 404
-	Write(svr, &res, w, r)
+	Write(srv, &res, w, r)
 }
