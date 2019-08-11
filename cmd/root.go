@@ -79,7 +79,7 @@ func Execute() {
 
 func runServer() (err error) {
 	logCnf := g.CommonCnf.Log
-	log.InitLog(logCnf.Way, logCnf.File, logCnf.Level, logCnf.MaxDays)
+	log.InitLog(logCnf.File, logCnf.Level, logCnf.MaxDays)
 
 	svr, err := server.NewService()
 	if err != nil {

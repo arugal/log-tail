@@ -11,9 +11,9 @@
     <section>
       <el-row :gutter="20">
         <el-col id="side-nav" :xs="24" :md="4">
-          <el-menu default-active="1" mode="vertical" theme="light" router @select="handleSelect">
+          <el-menu default-active="1" mode="vertical" theme="light" router="false" @select="handleSelect">
             <el-menu-item index="/">Catalog</el-menu-item>
-            <el-menu-item index>Help</el-menu-item>
+            <el-menu-item index="">Help</el-menu-item>
           </el-menu>
         </el-col>
 
@@ -30,14 +30,14 @@
 
 <script>
 export default {
-  methods: {
-    handleSelect(key, path) {
-      if (key === "") {
-        window.open("https://github.com/arugal/log-tail");
-      }
+    methods: {
+        handleSelect(key, path) {
+            if (key == '') {
+                window.open("https://github.com/arugal/log-tail")
+            }
+        }
     }
-  }
-};
+}
 </script>
 
 <style>

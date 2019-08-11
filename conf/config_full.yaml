@@ -1,0 +1,29 @@
+server:
+  host: 127.0.0.1
+  port: 3000
+  secure:
+    user: admin
+    pwd: admin
+common:
+  last_read_offset: 1000
+  conn_max_time: 10 # minute
+  heart_interval: 10 # second
+  log:
+    file: console # console or real logFile path ps: ./log_tail.log
+    level: info # trace, debug, warn, error
+    max_days: 1
+  ignore: # ignore file, the scope is global
+    suffix:
+      - .jar
+      - .war
+    regexp:
+      - "*.log.*"
+
+catalogs:
+  - name: app1
+    path: /tmp/app1/logs
+    ignore:
+      suffix:
+        - .txt
+      regexp:
+        - "*.out.*"

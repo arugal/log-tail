@@ -62,6 +62,10 @@ type CatalogsConf struct {
 
 func (cnf CatalogsConf) Verify() bool {
 
+	if len(cnf.Catalogs) < 1 {
+		return false
+	}
+
 	for _, catalog := range cnf.Catalogs {
 		if !catalog.Verify() {
 			return false
@@ -73,7 +77,6 @@ func (cnf CatalogsConf) Verify() bool {
 
 type LogConf struct {
 	File    string `json:"file"`
-	Way     string `json:"way"`
 	Level   string `json:"level"`
 	MaxDays int64  `json:"max_days"`
 }
@@ -148,7 +151,6 @@ func GetDefaultCommonConf() *CommonConf {
 		HeartIntervalDuration: time.Second,
 		Log: &LogConf{
 			File:    "console",
-			Way:     "console",
 			Level:   "info",
 			MaxDays: int64(7),
 		},

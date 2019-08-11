@@ -29,15 +29,15 @@ func init() {
 	Log.SetLogFuncCallDepth(Log.GetLogFuncCallDepth() + 1)
 }
 
-func InitLog(logWay string, logFile string, logLevel string, maxdays int64) {
-	SetLogFile(logWay, logFile, maxdays)
+func InitLog(logFile string, logLevel string, maxdays int64) {
+	SetLogFile(logFile, maxdays)
 	SetLogLevel(logLevel)
 }
 
 // SetLogFile to configure log params
 // logWay: file or console
-func SetLogFile(logWay string, logFile string, maxdays int64) {
-	if logWay == "console" {
+func SetLogFile(logFile string, maxdays int64) {
+	if logFile == "console" {
 		Log.SetLogger("console", "")
 	} else {
 		params := fmt.Sprintf(`{"filename": "%s", "maxdays": %d}`, logFile, maxdays)

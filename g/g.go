@@ -11,9 +11,9 @@ const (
 )
 
 var (
-	ServerCnf   *config2.ServerConf
-	CommonCnf   *config2.CommonConf
-	CatalogsCnf *config2.CatalogsConf
+	ServerCnf   = config2.GetDefaultServerConf()
+	CommonCnf   = config2.GetDefaultCommonConf()
+	CatalogsCnf = config2.GetDefaultCatalogsConf()
 )
 
 func Load(cfgFile string) error {
@@ -23,23 +23,29 @@ func Load(cfgFile string) error {
 	}
 
 	server := cnfMap[Server]
-	severMap := server.(map[interface{}]interface{})
-	ServerCnf, err = config2.UnmarshalServerConfFromYaml(severMap)
-	if err != nil {
-		return err
+	if server != nil {
+		severMap := server.(map[interface{}]interface{})
+		ServerCnf, err = config2.UnmarshalServerConfFromYaml(severMap)
+		if err != nil {
+			return err
+		}
 	}
 
 	common := cnfMap[Common]
-	commonMap := common.(map[interface{}]interface{})
-	CommonCnf, err = config2.UnmarshalCommonConfFromYaml(commonMap)
+	if common != nil {
+		commonMap := common.(map[interface{}]interface{})
+		CommonCnf, err = config2.UnmarshalCommonConfFromYaml(commonMap)
 
-	if err != nil {
-		return err
+		if err != nil {
+			return err
+		}
 	}
 	CommonCnf.CfgFile = cfgFile
 
 	catalog := cnfMap[Catalogs]
-	cataLogSlice := catalog.([]interface{})
-	CatalogsCnf, err = config2.UnmarshalCatalogConfFromYaml(cataLogSlice)
+	if catalog != nil {
+		cataLogSlice := catalog.([]interface{})
+		CatalogsCnf, err = config2.UnmarshalCatalogConfFromYaml(cataLogSlice)
+	}
 	return err
 }

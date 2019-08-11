@@ -20,6 +20,12 @@ var (
 func (srv *Service) RunDashboardServer() (err error) {
 	serverCnf := g.ServerCnf
 
+	// load static resource
+	err = assets.Load("")
+	if err != nil {
+		return err
+	}
+
 	// url router
 	router := mux.NewRouter()
 	router.Use(tailNet.NewHttpAuthMiddleware(serverCnf.Secure.User, serverCnf.Secure.Pwd).Middleware)
