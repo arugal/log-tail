@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # compile for version
 make
 if [ $? -ne 0 ]; then
